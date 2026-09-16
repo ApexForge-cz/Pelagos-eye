@@ -2,7 +2,7 @@
 
 - Date: 2026-09-17
 - Scope: Engineering foundation only
-- Status: In progress pending remote CI and container build
+- Status: In progress pending Docker Desktop repair and container build
 
 ## Implemented
 
@@ -40,11 +40,13 @@ Additional checks:
 
 ## Pending evidence
 
-- Docker image build could not run because Docker Desktop's Linux engine was not running.
-- The first GitHub Actions run passed backend, frontend, and Gitleaks jobs. A maintenance
-  follow-up upgraded actions that GitHub reported as using deprecated Node.js 20 runtimes;
-  the follow-up run is the final remote gate.
+- Docker image build could not run. Docker Desktop 4.70.0 was started, but its backend
+  crashed while initializing the Inference manager because its local `dockerInference`
+  runtime path could not be accessed. Resetting Docker Desktop may affect local container
+  state, so no reset was attempted automatically.
+- GitHub Actions run `35123661340` passed backend, frontend, and Gitleaks jobs after the
+  pinned actions were upgraded to Node.js 24-compatible releases.
 - No PostGIS/Redis integration test exists yet because Phase 1 has no domain persistence.
 
-Phase 1 must remain **In progress** until container build and remote CI are green. This does
-not block local API/web development, but it blocks claiming the phase gate is complete.
+Phase 1 must remain **In progress** until the container build is green. This does not block
+local API/web development, but it blocks claiming the phase gate is complete.

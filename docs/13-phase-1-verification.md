@@ -41,7 +41,9 @@ Additional checks:
 ## Pending evidence
 
 - Docker image build could not run because Docker Desktop's Linux engine was not running.
-- GitHub Actions and the pinned Gitleaks job can be confirmed only after the change is pushed.
+- The first GitHub Actions run passed backend, frontend, and Gitleaks jobs. A maintenance
+  follow-up upgraded actions that GitHub reported as using deprecated Node.js 20 runtimes;
+  the follow-up run is the final remote gate.
 - No PostGIS/Redis integration test exists yet because Phase 1 has no domain persistence.
 
 Phase 1 must remain **In progress** until container build and remote CI are green. This does

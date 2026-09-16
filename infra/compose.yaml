@@ -1,0 +1,78 @@
+name: oceanscope
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5-alpine
+    environment:
+      POSTGRES_DB: ${OCEANSCOPE_POSTGRES_DB:?Set OCEANSCOPE_POSTGRES_DB}
+      POSTGRES_USER: ${OCEANSCOPE_POSTGRES_USER:?Set OCEANSCOPE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${OCEANSCOPE_POSTGRES_PASSWORD:?Set OCEANSCOPE_POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.2-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    environment:
+      OCEANSCOPE_ENVIRONMENT: development
+      OCEANSCOPE_LOG_LEVEL: INFO
+      OCEANSCOPE_DATABASE_URL: ${OCEANSCOPE_DATABASE_URL:?Set OCEANSCOPE_DATABASE_URL}
+      OCEANSCOPE_REDIS_URL: ${OCEANSCOPE_REDIS_URL:?Set OCEANSCOPE_REDIS_URL}
+      OCEANSCOPE_CORS_ORIGINS: ${OCEANSCOPE_CORS_ORIGINS:?Set OCEANSCOPE_CORS_ORIGINS}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/web.Dockerfile
+    ports:
+      - "4173:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:

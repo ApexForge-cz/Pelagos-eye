@@ -1,0 +1,18 @@
+{
+  "name": "oceanscope-maritime-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "web:dev": "npm run dev --workspace @oceanscope/web",
+    "web:build": "npm run build --workspace @oceanscope/web",
+    "web:lint": "npm run lint --workspace @oceanscope/web",
+    "web:format:check": "npm run format:check --workspace @oceanscope/web",
+    "web:test": "npm run test --workspace @oceanscope/web"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

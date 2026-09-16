@@ -1,0 +1,51 @@
+# Risk Register
+
+Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is the repository maintainer. Review at every phase gate and after source, architecture, or deployment changes.
+
+| ID | Risk | Likelihood | Impact | Early indicator | Mitigation | Contingency |
+| --- | --- | --- | --- | --- | --- | --- |
+| R-01 | AIS provider unavailable | High | High | disconnects, no messages, provider health failure | supervised connection, backoff/jitter, bounded subscription, health metrics, persisted required observations | label cache/gap; show unavailable; disable live layer |
+| R-02 | AIS rate/connection limits exceeded | Medium | High | rejected fourth connection, frequent subscription close | centralize backend connection, respect three-connection and update limits, multiplex clients | narrow scope; queue subscription changes; reduce regions |
+| R-03 | AIS pricing/terms change or use rights unclear | Medium | High | provider notice, unclear redistribution language | archive/review terms before integration/release; provider abstraction; minimize raw redistribution | pause affected feature; replace provider after review |
+| R-04 | External API outage | High | Medium | timeouts/error-rate spike | provider-specific timeouts, retries, circuits, cache, isolated modules | serve labeled cache within TTL; `DATA UNAVAILABLE` |
+| R-05 | Unexpected API costs | Medium | High | quota/budget alert | call accounting, caching, budgets, hard quotas, non-commercial/commercial decision | degrade polling/layers; disable source before overrun |
+| R-06 | Large AIS volume overwhelms compute/storage | High | High | queue lag, memory/disk growth | bounded regions/types, batching, partitioning, retention, compression, profiling | shed nonessential updates; shorten retention; pause ingest |
+| R-07 | WebGL performance is poor | High | Medium | low frame rate, high memory, context loss | clustering/LOD, instancing, route lazy-load, GPU profiling | reduced effects/2D fallback; visible aggregation |
+| R-08 | Browser/GPU differences break rendering | Medium | Medium | browser-specific failures | capability detection, supported-browser matrix, fallbacks | disable unsupported layer/3D and provide table/2D path |
+| R-09 | Data licensing/attribution breach | Medium | High | missing terms record/attribution | source gate, license inventory, UI attribution, release review | remove source/data/artifact until compliant |
+| R-10 | Stale data appears current | Medium | High | ingestion lag exceeds threshold without warning | computed freshness, multiple timestamps, UI status contract, tests | force delayed/offline state; invalidate cache |
+| R-11 | Time zone errors corrupt analysis | Medium | High | shifted buckets/playback | UTC storage, aware timestamps, explicit display zone, boundary tests | recompute affected results with new algorithm version |
+| R-12 | Coordinate/CRS mistakes | Medium | High | points displaced, wrong distances/areas | EPSG:4326 boundary, SRID constraints, geography/projected metric queries, tests | quarantine/reimport; invalidate spatial derivatives |
+| R-13 | Duplicate vessel records/messages | High | Medium | inflated counts, overlapping positions | fingerprints, idempotent writes, documented dedup windows, identity observations | rerun normalized/derived layers from raw manifests |
+| R-14 | Missing or incorrect AIS fields | High | Medium | null/conflict rates rise | nullable schemas, quality flags, no inferred defaults, field-level provenance | hide/qualify fields; suppress dependent rules |
+| R-15 | Network reconnect causes continuity gaps | High | High | disconnect and later event-time jump | record connection epochs/gaps, persist stream, show gap, no interpolation across gap | mark affected interval incomplete; exclude from claims |
+| R-16 | WebSocket fan-out instability/slow clients | Medium | High | buffer growth, latency | bounded queues, coalescing, quotas, heartbeat, slow-client disconnect | reduce update frequency; require narrower filters |
+| R-17 | PostGIS queries become slow | Medium | High | p95/plan regression | spatial/time indexes, bounded queries, partitioning, EXPLAIN baselines, aggregates | cancel/limit query; serve precomputed lower-resolution result |
+| R-18 | Mobile layout becomes unusable | Medium | Medium | clipped panels/controls | progressive disclosure, device testing, simplified mobile modes | limit advanced workflow with clear desktop recommendation |
+| R-19 | GitHub secret leakage | Medium | Critical | scanner alert or exposed key | `.gitignore`, server-only settings, push protection, secret scan, review | revoke/rotate immediately; incident review and history remediation |
+| R-20 | Deployment cost exceeds solo budget | Medium | High | forecast/actual cost threshold | cost ceiling, retention plan, sleep/scale-to-zero where safe, budget alerts | reduce retention/features; take public demo offline safely |
+| R-21 | MarineCadastre mistaken for global history | Medium | High | global labels or comparisons | explicit U.S.-water coverage in contracts/UI/docs | block global view; correct published claims/results |
+| R-22 | AccessAIS ordering unavailable | High | Medium | official outage notice | use official bulk archives/manifests as primary ingestion path | postpone affected region/year; never scrape around controls |
+| R-23 | Provider schema drift | Medium | High | contract fixture failure, unknown envelope | versioned adapters, drift monitoring, reject/quarantine breaking records | freeze last compatible source version; disable ingestion |
+| R-24 | Port entity resolution merges wrong places | Medium | High | conflicting identifiers/coordinates | retain source records, identifier-first matching, confidence/manual review | unlink records; republish affected derivatives |
+| R-25 | Anomaly false positives harm credibility | High | High | reviewer rejection/alert overload | explainable rules, quality-aware suppression, calibration, neutral language | disable rule; retract/recompute affected indicators |
+| R-26 | Earthquake updates/retractions create inconsistency | Medium | Medium | provider `updated` changes | upsert by source ID/version, keep revision metadata | mark prior result superseded and recompute context |
+| R-27 | Open-Meteo coastal/model values misused | Medium | High | users infer navigation precision | model/resolution/valid-time warning and attribution | disable sensitive presentation; clarify limitations |
+| R-28 | One developer becomes bottleneck | High | High | growing WIP, stale docs, failing CI | narrow slices, WIP limit, automation, modular monolith, phase gates | reduce scope; delay advanced phases rather than cut quality |
+| R-29 | Dependency sprawl and upgrades | Medium | Medium | duplicate libraries, large bundle, vulnerabilities | dependency justification, lockfiles, periodic review, adapters | remove/replace dependency; postpone feature |
+| R-30 | Backups or migrations fail | Low | High | restore test failure | automated backups, migration tests, rehearsed restore and rollback | stop release; restore last verified snapshot |
+| R-31 | Generated intelligence invents claims | High | High | uncited/unsupported output | delay to Phase 8, structured evidence, citations, evals, narrow use cases | disable intelligence feature; retain deterministic views |
+| R-32 | UI aesthetics obscure uncertainty | Medium | High | status/attribution missed in usability test | evidence-first design review, restrained motion/glow, state matrix | simplify visuals; block release of misleading component |
+
+## Top risks before Phase 1
+
+1. Confirm AISStream terms for public display, caching, retention, and redistribution.
+2. Select a bounded live geography and raw AIS retention policy.
+3. Decide whether the public deployment is commercial; Open-Meteo free use is non-commercial.
+4. Set a monthly hosting/storage budget ceiling.
+5. Accept that initial historical analysis is U.S.-water only or fund/approve another global archive.
+
+## Review protocol
+
+Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.
+

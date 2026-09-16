@@ -1,0 +1,29 @@
+name: Data source review
+description: Evaluate or update an external data source
+title: "[Source]: "
+labels: ["type:data", "status:needs-validation"]
+body:
+  - type: input
+    id: official-url
+    attributes:
+      label: Official documentation URL
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Access, format, coverage, fields, and update behavior
+    validations:
+      required: true
+  - type: textarea
+    id: terms
+    attributes:
+      label: Terms, attribution, retention, and redistribution
+    validations:
+      required: true
+  - type: textarea
+    id: failure
+    attributes:
+      label: Validation, fallback, and outage behavior
+    validations:
+      required: true

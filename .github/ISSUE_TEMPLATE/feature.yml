@@ -1,0 +1,30 @@
+name: Feature proposal
+description: Propose a scoped, testable OceanScope capability
+title: "[Feature]: "
+labels: ["type:feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and user outcome
+      description: What problem should be solved, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-scope
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Data source and integrity states
+      description: Identify real sources, freshness, coverage, fallback, and attribution needs.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Acceptance evidence
+      description: State measurable behavior and verification commands.
+    validations:
+      required: true

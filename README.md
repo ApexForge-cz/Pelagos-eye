@@ -3,7 +3,7 @@
 > Global Maritime Situational Awareness & Analytics Platform<br>
 > 全球港航态势感知与智能分析平台
 
-**Status: 🚧 Phase 1 — Engineering Foundation**
+**Status: **Status: ✅ Phase 1 Complete****
 
 OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phase 0 planning is complete and Phase 1 now contains the minimal engineering foundation. No maritime data integration or production application is claimed.
 
@@ -19,18 +19,19 @@ The project is intentionally designed for one developer: a modular monolith, rep
 
 ## Planned Features
 
-| Capability | Status |
-| --- | --- |
-| Global 3D digital earth and 2D analytical map | Planned |
-| Live AIS ingestion, filtering, and WebSocket delivery | Planned |
-| Vessel and port search/detail views | Planned |
-| Historical AIS playback and traffic analytics | Planned |
-| Heatmaps, routes, trends, and geofences | Planned |
-| Waves, swell, sea-surface temperature, and currents | Planned |
-| Global earthquake and maritime-risk context | Planned |
-| Speed, course, dwell, and AIS-gap anomaly detection | Planned |
-| Data provenance, freshness, and system health | Planned |
-| Assisted maritime situation analysis | Planned, later phase |
+
+| Capability                                            | Status               |
+| ----------------------------------------------------- | -------------------- |
+| Global 3D digital earth and 2D analytical map         | Planned              |
+| Live AIS ingestion, filtering, and WebSocket delivery | Planned              |
+| Vessel and port search/detail views                   | Planned              |
+| Historical AIS playback and traffic analytics         | Planned              |
+| Heatmaps, routes, trends, and geofences               | Planned              |
+| Waves, swell, sea-surface temperature, and currents   | Planned              |
+| Global earthquake and maritime-risk context           | Planned              |
+| Speed, course, dwell, and AIS-gap anomaly detection   | Planned              |
+| Data provenance, freshness, and system health         | Planned              |
+| Assisted maritime situation analysis                  | Planned, later phase |
 
 ## Architecture Preview
 
@@ -67,32 +68,34 @@ All technology choices remain **Planned** until validated in an Architecture Dec
 
 ## Real Data Sources
 
-| Source | Planned use | Coverage / caveat |
-| --- | --- | --- |
-| AISStream | Live AIS over server-side WebSocket | Global feed; API key required; no SLA or durable replay |
-| MarineCadastre / AccessAIS | Historical tracks and traffic analysis | United States waters, not a global archive; bulk service is primary fallback |
-| UNECE UN/LOCODE | Trade and transport location identifiers | Global; release-based; not every entry is a seaport |
-| NGA World Port Index | Port coordinates, facilities, and services | Global; official CSV updated monthly; planning aid, not navigation authority |
-| Open-Meteo Marine API | Waves, swell, sea-surface temperature, currents | Model data; coastal limitations; free tier is non-commercial and rate-limited |
-| USGS Earthquake GeoJSON | Global earthquake context | Summary feed updates every minute; event records can be revised |
+
+| Source                     | Planned use                                     | Coverage / caveat                                                             |
+| -------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| AISStream                  | Live AIS over server-side WebSocket             | Global feed; API key required; no SLA or durable replay                       |
+| MarineCadastre / AccessAIS | Historical tracks and traffic analysis          | United States waters, not a global archive; bulk service is primary fallback  |
+| UNECE UN/LOCODE            | Trade and transport location identifiers        | Global; release-based; not every entry is a seaport                           |
+| NGA World Port Index       | Port coordinates, facilities, and services      | Global; official CSV updated monthly; planning aid, not navigation authority  |
+| Open-Meteo Marine API      | Waves, swell, sea-surface temperature, currents | Model data; coastal limitations; free tier is non-commercial and rate-limited |
+| USGS Earthquake GeoJSON    | Global earthquake context                       | Summary feed updates every minute; event records can be revised               |
 
 See [docs/03-data-sources.md](docs/03-data-sources.md) for verified endpoints, fields, limitations, licenses, and fallback policies.
 
 ## Roadmap
 
-| Phase | Focus | Status |
-| --- | --- | --- |
-| 0 | Research & Planning | Complete |
-| 1 | Engineering Foundation | In progress |
-| 2 | Real Data Foundation | Planned |
-| 3 | Digital Earth | Planned |
-| 4 | Live AIS | Planned |
-| 5 | Historical Analytics | Planned |
-| 6 | Risk & Anomaly Engine | Planned |
-| 7 | Advanced Visualization | Planned |
-| 8 | Intelligence | Planned |
-| 9 | QA & Security | Planned |
-| 10 | Production Release | Planned |
+
+| Phase | Focus                  | Status   |
+| ----- | ---------------------- | -------- |
+| 0     | Research & Planning    | Complete |
+| 1     | Engineering Foundation | Complete |
+| 2     | Real Data Foundation   | Planned  |
+| 3     | Digital Earth          | Planned  |
+| 4     | Live AIS               | Planned  |
+| 5     | Historical Analytics   | Planned  |
+| 6     | Risk & Anomaly Engine  | Planned  |
+| 7     | Advanced Visualization | Planned  |
+| 8     | Intelligence           | Planned  |
+| 9     | QA & Security          | Planned  |
+| 10    | Production Release     | Planned  |
 
 Detailed objectives, dependencies, risks, acceptance criteria, and definitions of done are in [docs/06-development-roadmap.md](docs/06-development-roadmap.md).
 

@@ -1,6 +1,6 @@
 # Data Sources and Verification
 
-Verified against official documentation on **2026-09-16**. URLs and terms can change; each integration must re-check the official source before implementation and release.
+Verified against official documentation and live official endpoints on **2026-09-17**. URLs and terms can change; each integration must re-check the official source before release.
 
 ## Source matrix
 
@@ -89,6 +89,7 @@ Use a locally/object-stored copy only when redistribution and storage terms allo
 - Publications: <https://unlocode.unece.org/publications/>
 - Data attributes: <https://unlocode.unece.org/docs/data-attributes/>
 - Directory/license notice: <https://unlocode.unece.org/directory/>
+- Official release metadata: <https://opensource.unicc.org/api/v4/projects/64/releases/permalink/latest>
 
 ### Verified contract
 
@@ -103,6 +104,9 @@ Use a locally/object-stored copy only when redistribution and storage terms allo
 - The five-character identifier is country code plus three-character location code.
 - Pin production release versions for reproducible behavior. Pre-release data, if ever exposed, must be labeled provisional.
 - Preserve change indicators and status instead of deleting superseded entries without lineage.
+- The importer resolves the official `UNLOCODE Data Archive` asset from release metadata,
+  requires the documented 12-column publication rows, selects records whose fixed-width
+  function string declares port function `1`, and stores the release tag plus SHA-256.
 
 ### License/use note
 
@@ -117,6 +121,8 @@ Serve the last validated official release with its edition and `CACHED` state. D
 ### Official sources
 
 - WPI publication/download page: <https://msi.nga.mil/Publications/WPI>
+- Official complete CSV: <https://msi.nga.mil/api/publications/world-port-index?output=csv>
+- Official OpenAPI description: <https://msi.nga.mil/api/v3/api-docs>
 - Feature service metadata: <https://vcps.nga.mil/nauticalpubs-feature/rest/services/WPI/World_Port_Index_Viewer/FeatureServer>
 
 ### Verified contract
@@ -125,8 +131,16 @@ Serve the last validated official release with its edition and `CACHED` state. D
 - The official page identifies CSV as the official content format and also offers GeoPackage, JSON, shapefile, and file geodatabase downloads through the viewer.
 - Complete content is updated monthly.
 - The feature service uses spatial reference EPSG:4326 and documents a maximum record count of 3,000 for service queries; full imports should prefer the official CSV rather than fragile pagination against the viewer.
+- The CSV endpoint did not provide a stable edition identifier, `ETag`, or
+  `Last-Modified` value during verification. The importer therefore uses the file's
+  SHA-256 as its immutable data version and the normalized header SHA-256 as its schema
+  version; it does not invent a publication timestamp.
 
 ### Planned fields
+
+The first importer retains the stable port number, name, country code, coordinates,
+UN/LOCODE when present, every source column in the raw record, the content/schema hashes,
+and quality flags. Broader typed mapping remains future work.
 
 Retain the stable source key, port/country/region names, coordinates, UN/LOCODE when present, harbor/entrance attributes, size/type, maximum vessel dimensions where supplied, facilities, services, publication links, source edition, and raw values. The exact mapping must be generated from the current official “Explanation of Data Fields,” not inferred from an old edition.
 
@@ -217,4 +231,3 @@ No source enters production until all items pass:
 - Provenance mapping and raw-record retention decision documented
 - Health and freshness thresholds approved
 - Removal/rollback plan documented
-

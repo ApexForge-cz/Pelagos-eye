@@ -1,4 +1,4 @@
-# Phase 1 Direct Dependency Inventory
+# Direct Dependency Inventory
 
 - Review date: 2026-09-17
 - Sources of truth: `apps/api/uv.lock` and root `package-lock.json`
@@ -11,6 +11,8 @@
 | --- | ---: | --- | --- |
 | Alembic | 1.20.0 | MIT | Versioned PostgreSQL/PostGIS migrations |
 | FastAPI | 0.141.1 | MIT | Typed HTTP application and OpenAPI |
+| GeoAlchemy2 | 0.20.0 | MIT | Typed PostGIS geography columns and spatial DDL integration |
+| HTTPX | 0.28.1 | BSD-3-Clause | Bounded official-source HTTP downloads with proxy support |
 | psycopg | 3.3.5 | LGPL-3.0-only | PostgreSQL driver for migrations/later repositories |
 | pydantic-settings | 2.15.0 | MIT | Typed environment configuration and secret wrappers |
 | SQLAlchemy | 2.0.54 | MIT | Repository and migration metadata foundation |
@@ -21,7 +23,6 @@
 
 | Package | Locked version | License | Reason |
 | --- | ---: | --- | --- |
-| HTTPX | 0.28.1 | BSD-3-Clause | ASGI/API contract tests and later provider clients |
 | mypy | 1.20.2 | MIT | Strict static type checking |
 | pytest | 8.4.2 | MIT | Python behavior tests |
 | pytest-cov | 6.3.0 | MIT | Diagnostic coverage reports |

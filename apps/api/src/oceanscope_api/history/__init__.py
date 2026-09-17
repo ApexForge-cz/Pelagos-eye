@@ -1,0 +1,1 @@
+"""Bounded historical AIS ingestion."""

@@ -14,10 +14,12 @@ dependencies = [
   "sqlalchemy>=2.0,<3",
   "structlog>=25.4,<26",
   "uvicorn[standard]>=0.35,<1",
+  "zstandard>=0.25,<0.26",
 ]
 
 [project.scripts]
 oceanscope-import-earthquakes = "oceanscope_api.earthquakes.cli:main"
+oceanscope-import-history = "oceanscope_api.history.cli:main"
 oceanscope-import-marine = "oceanscope_api.ocean.cli:main"
 oceanscope-import-ports = "oceanscope_api.ports.cli:main"
 

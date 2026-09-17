@@ -1,10 +1,13 @@
+import csv
 import hashlib
+import io
 import os
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
 import pytest
+import zstandard
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine, make_url
@@ -17,6 +20,11 @@ from oceanscope_api.earthquakes.contracts import FetchedEarthquakeFeed
 from oceanscope_api.earthquakes.parser import UsgsEarthquakeParser
 from oceanscope_api.earthquakes.provider import USGS_SOURCE
 from oceanscope_api.earthquakes.service import EarthquakeImportService
+from oceanscope_api.history.artifacts import HistoricalAisArtifactStore
+from oceanscope_api.history.contracts import FetchedHistoricalAisArchive, HistoricalAisRequest
+from oceanscope_api.history.parser import MarineCadastreCsvParser
+from oceanscope_api.history.provider import MARINE_CADASTRE_SOURCE
+from oceanscope_api.history.service import HistoricalAisImportService
 from oceanscope_api.ocean.artifacts import MarineForecastArtifactStore
 from oceanscope_api.ocean.contracts import FetchedMarineForecast, MarineForecastRequest
 from oceanscope_api.ocean.parser import OpenMeteoMarineParser
@@ -61,12 +69,14 @@ def test_provenance_migration_round_trip(tmp_path: Path) -> None:
                 "quality_issue",
                 "port_source_record",
                 "earthquake_event",
+                "historical_ais_position",
                 "marine_forecast_point",
             }.issubset(set(inspect(engine).get_table_names()))
             _assert_database_rejects_invalid_completed_run(engine)
             _assert_port_import_is_spatial_and_idempotent(engine, tmp_path)
             _assert_earthquake_import_is_spatial_and_idempotent(engine, tmp_path)
             _assert_marine_import_is_spatial_and_idempotent(engine, tmp_path)
+            _assert_historical_ais_import_is_spatial_and_idempotent(engine, tmp_path)
 
             command.downgrade(configuration, "20260917_0001")
             assert not {
@@ -76,6 +86,7 @@ def test_provenance_migration_round_trip(tmp_path: Path) -> None:
                 "quality_issue",
                 "port_source_record",
                 "earthquake_event",
+                "historical_ais_position",
                 "marine_forecast_point",
             }.intersection(inspect(engine).get_table_names())
         finally:
@@ -325,3 +336,106 @@ def _assert_marine_import_is_spatial_and_idempotent(engine: Engine, tmp_path: Pa
     assert count == 1
     assert srid == 4326
     assert height == 1.4
+
+
+class _TestHistoricalAisProvider:
+    source = MARINE_CADASTRE_SOURCE
+
+    def __init__(self, tmp_path: Path) -> None:
+        output = io.StringIO(newline="")
+        writer = csv.writer(output)
+        writer.writerow(
+            [
+                "MMSI",
+                "BaseDateTime",
+                "LAT",
+                "LON",
+                "SOG",
+                "COG",
+                "Heading",
+                "VesselName",
+                "IMO",
+                "CallSign",
+                "VesselType",
+                "Status",
+                "Length",
+                "Width",
+                "Draft",
+                "Cargo",
+                "TransceiverClass",
+            ]
+        )
+        writer.writerow(
+            [
+                "123456789",
+                "2024-01-14T00:10:00",
+                "29.0",
+                "-90.0",
+                "10.5",
+                "90",
+                "91",
+                "TEST DATA VESSEL",
+                "IMO1234567",
+                "TEST123",
+                "70",
+                "0",
+                "100",
+                "20",
+                "6.5",
+                "70",
+                "A",
+            ]
+        )
+        self._content = zstandard.ZstdCompressor().compress(output.getvalue().encode())
+        self._path = tmp_path / "TEST-DATA-history.csv.zst"
+        self._path.write_bytes(self._content)
+
+    def fetch(self, request: HistoricalAisRequest) -> FetchedHistoricalAisArchive:
+        return FetchedHistoricalAisArchive(
+            source=self.source,
+            request=request,
+            data_version="TEST-DATA-history-v1",
+            schema_version="TEST-DATA-schema",
+            source_url="https://example.test/history",
+            archive_path=self._path,
+            checksum_sha256=hashlib.sha256(self._content).hexdigest(),
+            size_bytes=len(self._content),
+            retrieved_at=datetime(2026, 9, 17, 12, tzinfo=UTC),
+        )
+
+
+def _assert_historical_ais_import_is_spatial_and_idempotent(engine: Engine, tmp_path: Path) -> None:
+    request = HistoricalAisRequest(
+        archive_date=datetime(2024, 1, 14, tzinfo=UTC).date(),
+        min_longitude=-91,
+        min_latitude=28,
+        max_longitude=-89,
+        max_latitude=30,
+        start_at=datetime(2024, 1, 14, 0, tzinfo=UTC),
+        end_at=datetime(2024, 1, 14, 1, tzinfo=UTC),
+        record_limit=10,
+    )
+    provider = _TestHistoricalAisProvider(tmp_path)
+    with Session(engine) as session:
+        service = HistoricalAisImportService(
+            session,
+            HistoricalAisArtifactStore(tmp_path),
+            code_revision="TEST-DATA-revision",
+        )
+        first = service.import_archive(provider, MarineCadastreCsvParser(), request)
+        second = service.import_archive(provider, MarineCadastreCsvParser(), request)
+
+    assert first.status == "succeeded"
+    assert first.inserted == 1
+    assert second.ingestion_run_id == first.ingestion_run_id
+
+    with engine.connect() as connection:
+        count, srid, mmsi = connection.execute(
+            text(
+                "SELECT count(*), min(ST_SRID(location::geometry)), max(mmsi) "
+                "FROM historical_ais_position"
+            )
+        ).one()
+    assert count == 1
+    assert srid == 4326
+    assert mmsi == "123456789"

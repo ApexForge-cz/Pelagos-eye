@@ -11,6 +11,7 @@ Proposed decisions remain open and must not be treated as final.
 | [0004](0004-local-infrastructure.md) | Local infrastructure and initial deployment posture | Accepted |
 | [0005](0005-license.md) | Source-code license | Accepted — MIT |
 | [0006](0006-provenance-schema.md) | Source catalog and ingestion provenance foundation | Accepted |
+| [0007](0007-official-port-source-ingestion.md) | Official port-source ingestion and source-record boundary | Accepted |
 
 Later GIS, live-event durability, AIS retention, raw artifact storage, and authentication
 decisions remain deferred until the relevant phase has evidence.

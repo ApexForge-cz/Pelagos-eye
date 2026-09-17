@@ -53,12 +53,14 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
   timestamps, versioned ingestion runs, quality counts, and idempotency keys.
 - R-21 remains a hard scope boundary: MarineCadastre may support only bounded U.S.-water
   historical work and cannot justify global historical claims.
-- R-24 remains deferred until UN/LOCODE and WPI source records exist; no name-only port
-  merge is authorized.
+- R-24 is now mitigated at the source-record boundary: UN/LOCODE and WPI records are kept
+  separate with their own immutable versions and keys. Canonical port matching remains
+  deferred; no name-only merge is authorized.
 - R-30 mitigation has started with a dedicated PostGIS upgrade/downgrade/upgrade test for
   the provenance migration. Backup and restore rehearsal remains a later release gate.
-- No provider, dataset, redistribution permission, cache policy, or production data path
-  is considered validated merely because the shared provenance schema exists.
+- The UN/LOCODE and WPI download/parse/persist paths have local real-data evidence. WPI
+  redistribution remains `unreviewed`, and neither source has a public data route or
+  production deployment. Other providers and cache policies remain unvalidated.
 
 ## Review protocol
 

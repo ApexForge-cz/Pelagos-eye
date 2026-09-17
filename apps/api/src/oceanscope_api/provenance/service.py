@@ -178,21 +178,17 @@ class ProvenanceService:
                 schema_version,
                 command.source_url,
                 command.published_at,
-                command.retrieved_at,
                 command.publication_status.value,
                 command.checksum_algorithm,
                 command.checksum,
-                command.artifact_reference,
             )
             actual = (
                 existing.schema_version,
                 existing.source_url,
                 existing.published_at,
-                existing.retrieved_at,
                 existing.publication_status,
                 existing.checksum_algorithm,
                 existing.checksum,
-                existing.artifact_reference,
             )
             if actual != expected:
                 raise ProvenanceConflictError(f"source version {data_version!r} already differs")
@@ -241,18 +237,17 @@ class ProvenanceService:
                 command.source_state.value,
                 command.cache_age_seconds,
                 code_revision,
-                command.started_at,
-                command.parameters,
             )
             actual = (
                 existing.source_version_id,
                 existing.source_state,
                 existing.cache_age_seconds,
                 existing.code_revision,
-                existing.started_at,
-                existing.parameters,
             )
-            if actual != expected:
+            parameters_match = all(
+                existing.parameters.get(key) == value for key, value in command.parameters.items()
+            )
+            if actual != expected or not parameters_match:
                 raise ProvenanceConflictError("idempotency key already identifies another run")
             return existing
 

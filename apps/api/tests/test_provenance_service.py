@@ -34,7 +34,15 @@ LATER = NOW + timedelta(hours=1)
 @pytest.fixture
 def session() -> Iterator[Session]:
     engine = create_engine("sqlite+pysqlite:///:memory:")
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Base.metadata.tables["data_source"],
+            Base.metadata.tables["source_version"],
+            Base.metadata.tables["ingestion_run"],
+            Base.metadata.tables["quality_issue"],
+        ],
+    )
     with Session(engine) as database_session:
         yield database_session
     engine.dispose()
@@ -166,6 +174,52 @@ def test_normalized_version_and_run_keys_remain_idempotent(
     assert normalized_run.id == run.id
 
 
+def test_rechecking_unchanged_artifact_reuses_version_and_run(
+    service: ProvenanceService,
+) -> None:
+    source = service.register_source(source_command())
+    first_version_command = version_command(source.id)
+    version = service.register_version(first_version_command)
+    rechecked_version = service.register_version(
+        RegisterSourceVersion(
+            source_id=source.id,
+            data_version=first_version_command.data_version,
+            schema_version=first_version_command.schema_version,
+            source_url=first_version_command.source_url,
+            published_at=first_version_command.published_at,
+            retrieved_at=LATER + timedelta(hours=1),
+            checksum_algorithm=first_version_command.checksum_algorithm,
+            checksum=first_version_command.checksum,
+            artifact_reference="test-only://second-local-copy",
+        )
+    )
+    assert rechecked_version.id == version.id
+    assert rechecked_version.retrieved_at == LATER
+
+    first_run = service.start_run(
+        StartIngestionRun(
+            source_id=source.id,
+            source_version_id=version.id,
+            idempotency_key="unchanged-artifact",
+            source_state=SourceState.LIVE,
+            code_revision="test-revision",
+            started_at=NOW,
+        )
+    )
+    retried_run = service.start_run(
+        StartIngestionRun(
+            source_id=source.id,
+            source_version_id=version.id,
+            idempotency_key="unchanged-artifact",
+            source_state=SourceState.LIVE,
+            code_revision="test-revision",
+            started_at=LATER,
+        )
+    )
+    assert retried_run.id == first_run.id
+    assert retried_run.started_at == NOW
+
+
 def test_source_slug_is_idempotent_only_for_identical_content(
     service: ProvenanceService,
 ) -> None:
@@ -245,6 +299,35 @@ def test_run_rejects_version_from_another_source(service: ProvenanceService) -> 
                 source_state=SourceState.LIVE,
                 code_revision="test-revision",
                 started_at=NOW,
+            )
+        )
+
+
+def test_run_idempotency_rejects_changed_request_parameters(
+    service: ProvenanceService,
+) -> None:
+    source = service.register_source(source_command())
+    base = StartIngestionRun(
+        source_id=source.id,
+        source_version_id=None,
+        idempotency_key="parameter-conflict",
+        source_state=SourceState.LIVE,
+        code_revision="test-revision",
+        started_at=NOW,
+        parameters={"scope": "TEST DATA A"},
+    )
+    service.start_run(base)
+
+    with pytest.raises(ProvenanceConflictError, match="another run"):
+        service.start_run(
+            StartIngestionRun(
+                source_id=source.id,
+                source_version_id=None,
+                idempotency_key="parameter-conflict",
+                source_state=SourceState.LIVE,
+                code_revision="test-revision",
+                started_at=LATER,
+                parameters={"scope": "TEST DATA B"},
             )
         )
 

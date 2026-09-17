@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator
@@ -17,6 +18,7 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     public_base_url: str | None = None
     cors_origins: str = ""
+    data_directory: Path = Path("data")
     database_url: SecretStr | None = None
     redis_url: SecretStr | None = None
     aisstream_api_key: SecretStr | None = Field(

@@ -5,6 +5,7 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from oceanscope_api.core.settings import get_settings
 from oceanscope_api.db.base import Base
+from oceanscope_api.ports import models as port_models  # noqa: F401
 from oceanscope_api.provenance import models as provenance_models  # noqa: F401
 
 config = context.config
@@ -22,6 +23,17 @@ if not config.get_main_option("sqlalchemy.url") and settings.database_url is not
 target_metadata = Base.metadata
 
 
+def include_object(
+    _object: object,
+    name: str | None,
+    type_: str,
+    reflected: bool,
+    _compare_to: object,
+) -> bool:
+    """Exclude tables managed internally by the PostGIS extension."""
+    return not (reflected and type_ == "table" and name == "spatial_ref_sys")
+
+
 def require_database_url() -> None:
     if not config.get_main_option("sqlalchemy.url"):
         message = "OCEANSCOPE_DATABASE_URL is required for migration commands"
@@ -36,6 +48,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -55,6 +68,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
+            include_object=include_object,
         )
 
         with context.begin_transaction():

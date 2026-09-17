@@ -5,7 +5,7 @@
 
 **Status: 🚧 Phase 2 — Real Data Foundation**
 
-OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phases 0 and 1 are complete. Phase 2 has begun with the shared provenance and ingestion-run foundation; no maritime provider integration or production application is claimed yet.
+OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phases 0 and 1 are complete. Phase 2 now includes the shared provenance foundation plus internal, reproducible imports of official UNECE UN/LOCODE and NGA World Port Index records. No public port API, map layer, or production deployment is claimed yet.
 
 ## Project Vision
 
@@ -31,6 +31,7 @@ The project is intentionally designed for one developer: a modular monolith, rep
 | Global earthquake and maritime-risk context           | Planned              |
 | Speed, course, dwell, and AIS-gap anomaly detection   | Planned              |
 | Data provenance, freshness, and system health         | In progress          |
+| Official port-reference ingestion                     | Implemented, internal |
 | Assisted maritime situation analysis                  | Planned, later phase |
 
 ## Architecture Preview
@@ -101,7 +102,7 @@ Detailed objectives, dependencies, risks, acceptance criteria, and definitions o
 
 ## Development Status
 
-Phases 0 and 1 are complete. Phase 2 is establishing the source catalog, source-version, ingestion-run, and quality-issue contracts before any provider adapter is connected. There is still no connected maritime provider, port or vessel dataset, map feature, production deployment, or live-data service.
+Phases 0 and 1 are complete. Phase 2 has connected the first two official reference providers behind the source catalog, source-version, ingestion-run, and quality-issue contracts. UN/LOCODE and WPI can be imported into PostGIS with checksummed raw artifacts, strict validation, and idempotent reruns. Public data/status APIs, a port entity-resolution layer, map features, production deployment, and live-data services remain unfinished.
 
 ## Development Quick Start
 
@@ -137,7 +138,7 @@ The API exposes only `/health/live` and `/health/ready`. The web application is 
 
 ## Documentation
 
-The `docs/` directory contains the project charter, product requirements, architecture, source verification, governance, design system, roadmap, testing and security plans, GitHub strategy, risk register, Codex skill specifications, project-wide completion criteria, ADRs, the Phase 1 verification record, and the direct dependency inventory.
+The `docs/` directory contains the project charter, product requirements, architecture, source verification, governance, design system, roadmap, testing and security plans, GitHub strategy, risk register, Codex skill specifications, project-wide completion criteria, ADRs, phase verification records, and the direct dependency inventory.
 
 ## License
 

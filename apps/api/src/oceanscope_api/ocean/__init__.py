@@ -1,0 +1,1 @@
+"""Bounded marine forecast ingestion."""

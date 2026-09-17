@@ -17,6 +17,11 @@ from oceanscope_api.earthquakes.contracts import FetchedEarthquakeFeed
 from oceanscope_api.earthquakes.parser import UsgsEarthquakeParser
 from oceanscope_api.earthquakes.provider import USGS_SOURCE
 from oceanscope_api.earthquakes.service import EarthquakeImportService
+from oceanscope_api.ocean.artifacts import MarineForecastArtifactStore
+from oceanscope_api.ocean.contracts import FetchedMarineForecast, MarineForecastRequest
+from oceanscope_api.ocean.parser import OpenMeteoMarineParser
+from oceanscope_api.ocean.provider import OPEN_METEO_MARINE_SOURCE
+from oceanscope_api.ocean.service import MarineForecastImportService
 from oceanscope_api.ports.artifacts import LocalArtifactStore
 from oceanscope_api.ports.contracts import FetchedPortDataset, SourceDescriptor
 from oceanscope_api.ports.parsers import WorldPortIndexParser
@@ -56,10 +61,12 @@ def test_provenance_migration_round_trip(tmp_path: Path) -> None:
                 "quality_issue",
                 "port_source_record",
                 "earthquake_event",
+                "marine_forecast_point",
             }.issubset(set(inspect(engine).get_table_names()))
             _assert_database_rejects_invalid_completed_run(engine)
             _assert_port_import_is_spatial_and_idempotent(engine, tmp_path)
             _assert_earthquake_import_is_spatial_and_idempotent(engine, tmp_path)
+            _assert_marine_import_is_spatial_and_idempotent(engine, tmp_path)
 
             command.downgrade(configuration, "20260917_0001")
             assert not {
@@ -69,6 +76,7 @@ def test_provenance_migration_round_trip(tmp_path: Path) -> None:
                 "quality_issue",
                 "port_source_record",
                 "earthquake_event",
+                "marine_forecast_point",
             }.intersection(inspect(engine).get_table_names())
         finally:
             engine.dispose()
@@ -245,3 +253,75 @@ def _assert_earthquake_import_is_spatial_and_idempotent(engine: Engine, tmp_path
     assert count == 1
     assert srid == 4326
     assert magnitude == 2.5
+
+
+class _TestMarineProvider:
+    source = OPEN_METEO_MARINE_SOURCE
+
+    def fetch(self, request: MarineForecastRequest) -> FetchedMarineForecast:
+        import json
+
+        document = {
+            "latitude": 20.041664,
+            "longitude": -40.041656,
+            "utc_offset_seconds": 0,
+            "timezone": "GMT",
+            "hourly_units": {
+                "time": "iso8601",
+                "wave_height": "m",
+                "wave_direction": "°",
+                "wave_period": "s",
+                "sea_surface_temperature": "°C",
+                "ocean_current_velocity": "km/h",
+                "ocean_current_direction": "°",
+                "sea_level_height_msl": "m",
+            },
+            "hourly": {
+                "time": ["2026-09-17T12:00"],
+                "wave_height": [1.4],
+                "wave_direction": [71],
+                "wave_period": [7.55],
+                "sea_surface_temperature": [27.6],
+                "ocean_current_velocity": [0.5],
+                "ocean_current_direction": [225],
+                "sea_level_height_msl": [0.19],
+            },
+        }
+        content = json.dumps(document).encode()
+        return FetchedMarineForecast(
+            source=self.source,
+            request=request,
+            data_version="TEST-DATA-marine-v1",
+            schema_version="TEST-DATA-schema",
+            source_url="https://example.test/marine",
+            content=content,
+            checksum_sha256=hashlib.sha256(content).hexdigest(),
+            retrieved_at=datetime(2026, 9, 17, 12, tzinfo=UTC),
+        )
+
+
+def _assert_marine_import_is_spatial_and_idempotent(engine: Engine, tmp_path: Path) -> None:
+    request = MarineForecastRequest(latitude=20, longitude=-40, forecast_hours=1)
+    with Session(engine) as session:
+        service = MarineForecastImportService(
+            session,
+            MarineForecastArtifactStore(tmp_path),
+            code_revision="TEST-DATA-revision",
+        )
+        first = service.import_forecast(_TestMarineProvider(), OpenMeteoMarineParser(), request)
+        second = service.import_forecast(_TestMarineProvider(), OpenMeteoMarineParser(), request)
+
+    assert first.status == "succeeded"
+    assert first.inserted == 1
+    assert second.ingestion_run_id == first.ingestion_run_id
+
+    with engine.connect() as connection:
+        count, srid, height = connection.execute(
+            text(
+                "SELECT count(*), min(ST_SRID(location::geometry)), max(wave_height_m) "
+                "FROM marine_forecast_point"
+            )
+        ).one()
+    assert count == 1
+    assert srid == 4326
+    assert height == 1.4

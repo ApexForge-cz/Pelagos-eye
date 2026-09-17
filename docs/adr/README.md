@@ -13,6 +13,7 @@ Proposed decisions remain open and must not be treated as final.
 | [0006](0006-provenance-schema.md) | Source catalog and ingestion provenance foundation | Accepted |
 | [0007](0007-official-port-source-ingestion.md) | Official port-source ingestion and source-record boundary | Accepted |
 | [0008](0008-usgs-event-revisions.md) | USGS feed versioning and latest-event revision semantics | Accepted |
+| [0009](0009-open-meteo-forecast-snapshots.md) | Bounded Open-Meteo marine forecast snapshots | Accepted |
 
 Later GIS, live-event durability, AIS retention, raw artifact storage, and authentication
 decisions remain deferred until the relevant phase has evidence.

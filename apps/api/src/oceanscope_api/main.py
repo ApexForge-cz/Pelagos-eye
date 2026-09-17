@@ -5,7 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from oceanscope_api import __version__
+from oceanscope_api.api.routes.data import router as data_router
 from oceanscope_api.api.routes.health import router as health_router
+from oceanscope_api.api.routes.system import router as system_router
 from oceanscope_api.core.errors import install_exception_handlers
 from oceanscope_api.core.logging import CorrelationIdMiddleware, configure_logging
 from oceanscope_api.core.settings import get_settings
@@ -39,6 +41,8 @@ def create_app() -> FastAPI:
 
     install_exception_handlers(application)
     application.include_router(health_router)
+    application.include_router(data_router)
+    application.include_router(system_router)
     return application
 
 

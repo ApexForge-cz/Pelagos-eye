@@ -55,7 +55,8 @@ evidence, not test fixtures.
 
 ## Remaining Phase 2 work
 
-- Expose bounded `/data` and `/system` status APIs with freshness and source-state fields.
+- Add the planned frontend `/data` and `/system` screens; the read-only backend
+  `/data/sources` and `/system/status` contracts are now implemented.
 - Integrate a bounded MarineCadastre import, Open-Meteo Marine, and USGS earthquakes.
 - Define cache/TTL policy and visible `CACHED`, `DELAYED`, and `OFFLINE` behavior per
   source.

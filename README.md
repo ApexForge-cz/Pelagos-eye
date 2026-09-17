@@ -5,7 +5,7 @@
 
 **Status: 🚧 Phase 2 — Real Data Foundation**
 
-OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phases 0 and 1 are complete. Phase 2 now includes the shared provenance foundation plus internal, reproducible imports of official UNECE UN/LOCODE and NGA World Port Index records. No public port API, map layer, or production deployment is claimed yet.
+OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phases 0 and 1 are complete. Phase 2 now includes the shared provenance foundation, internal reproducible imports of official UNECE UN/LOCODE and NGA World Port Index records, and read-only source/system status APIs. No public port-record API, map layer, or production deployment is claimed yet.
 
 ## Project Vision
 
@@ -32,6 +32,7 @@ The project is intentionally designed for one developer: a modular monolith, rep
 | Speed, course, dwell, and AIS-gap anomaly detection   | Planned              |
 | Data provenance, freshness, and system health         | In progress          |
 | Official port-reference ingestion                     | Implemented, internal |
+| Source catalog and system status APIs                  | Implemented, internal |
 | Assisted maritime situation analysis                  | Planned, later phase |
 
 ## Architecture Preview
@@ -102,7 +103,7 @@ Detailed objectives, dependencies, risks, acceptance criteria, and definitions o
 
 ## Development Status
 
-Phases 0 and 1 are complete. Phase 2 has connected the first two official reference providers behind the source catalog, source-version, ingestion-run, and quality-issue contracts. UN/LOCODE and WPI can be imported into PostGIS with checksummed raw artifacts, strict validation, and idempotent reruns. Public data/status APIs, a port entity-resolution layer, map features, production deployment, and live-data services remain unfinished.
+Phases 0 and 1 are complete. Phase 2 has connected the first two official reference providers behind the source catalog, source-version, ingestion-run, and quality-issue contracts. UN/LOCODE and WPI can be imported into PostGIS with checksummed raw artifacts, strict validation, and idempotent reruns. Read-only `/data/sources` and `/system/status` APIs expose provenance and honest availability without exposing WPI records. A port-record API, entity-resolution layer, map features, production deployment, and live-data services remain unfinished.
 
 ## Development Quick Start
 

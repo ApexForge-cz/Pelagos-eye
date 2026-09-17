@@ -6,6 +6,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 
 
+class DatabaseUnavailableError(RuntimeError):
+    """Raised when a database-backed API cannot safely answer a request."""
+
+
 class ProblemDetail(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -38,5 +42,25 @@ async def validation_error_handler(
     )
 
 
+async def database_unavailable_handler(
+    request: Request,
+    _: DatabaseUnavailableError,
+) -> JSONResponse:
+    problem = ProblemDetail(
+        type="https://oceanscope.invalid/problems/database-unavailable",
+        title="Database unavailable",
+        status=503,
+        detail="The requested data is currently unavailable.",
+        instance=request.url.path,
+        correlation_id=getattr(request.state, "correlation_id", None),
+    )
+    return JSONResponse(
+        status_code=problem.status,
+        content=problem.model_dump(mode="json", exclude_none=True),
+        media_type="application/problem+json",
+    )
+
+
 def install_exception_handlers(application: FastAPI) -> None:
     application.add_exception_handler(RequestValidationError, validation_error_handler)  # type: ignore[arg-type]
+    application.add_exception_handler(DatabaseUnavailableError, database_unavailable_handler)  # type: ignore[arg-type]

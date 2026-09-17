@@ -38,3 +38,17 @@ dataset through an API.
 
 UN/LOCODE is CC BY 4.0 with attribution. WPI redistribution remains `unreviewed`; keep
 its downloaded artifact local until a release-time terms review is completed.
+
+## Read-only status endpoints
+
+- `GET /data/sources` returns the source catalog, official/terms links, attribution,
+  redistribution status, controlled source state, latest ingestion, latest usable
+  version, record counts, and quality findings. The current run and latest usable run
+  are separate so a provider failure never relabels old data as live.
+- `GET /system/status` returns the application version and database availability. A
+  missing or unreachable database is `DEGRADED` / `OFFLINE` with `DATA UNAVAILABLE`.
+- `GET /data/sources` returns RFC 9457-style `application/problem+json` with status 503
+  when the database cannot answer safely.
+
+These endpoints expose metadata only. They do not return port records or bypass the WPI
+redistribution gate.

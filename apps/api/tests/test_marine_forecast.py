@@ -7,7 +7,12 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import pytest
 
-from oceanscope_api.ocean.contracts import FetchedMarineForecast, MarineForecastRequest
+from oceanscope_api.ocean.contracts import (
+    MARINE_VARIABLES,
+    FetchedMarineForecast,
+    MarineForecastRequest,
+    MarineSchemaError,
+)
 from oceanscope_api.ocean.parser import OpenMeteoMarineParser
 from oceanscope_api.ocean.provider import OPEN_METEO_MARINE_SOURCE, OpenMeteoMarineProvider
 from oceanscope_api.ports.download import HttpDownloader
@@ -95,6 +100,60 @@ def test_parser_rejects_row_when_all_values_are_null() -> None:
     assert len(parsed.records) == 1
     assert parsed.records_rejected == 1
     assert parsed.quality_counts == {"coverage_unknown": 1}
+
+
+def test_parser_supports_an_explicit_variable_subset() -> None:
+    request = MarineForecastRequest(
+        latitude=20,
+        longitude=-40,
+        forecast_hours=2,
+        variables=("wave_height",),
+    )
+    content = json.dumps(forecast_document()).encode()
+    subset_dataset = FetchedMarineForecast(
+        source=OPEN_METEO_MARINE_SOURCE,
+        request=request,
+        data_version="TEST-DATA",
+        schema_version="TEST-DATA-schema",
+        source_url="https://example.test/marine",
+        content=content,
+        checksum_sha256=hashlib.sha256(content).hexdigest(),
+        retrieved_at=datetime(2026, 9, 17, 12, tzinfo=UTC),
+    )
+
+    parsed = OpenMeteoMarineParser().parse(subset_dataset)
+
+    assert parsed.records[0].wave_height_m == 1.4
+    assert parsed.records[0].wave_period_s is None
+
+
+def test_parser_rejects_truncated_forecast() -> None:
+    document = forecast_document()
+    document["hourly"]["time"].pop()
+    for variable in MARINE_VARIABLES:
+        document["hourly"][variable].pop()
+
+    with pytest.raises(MarineSchemaError, match="forecast_hours"):
+        OpenMeteoMarineParser().parse(dataset(document))
+
+
+def test_parser_rejects_changed_units() -> None:
+    document = forecast_document()
+    document["hourly_units"]["wave_height"] = "ft"
+
+    with pytest.raises(MarineSchemaError, match="unit changed"):
+        OpenMeteoMarineParser().parse(dataset(document))
+
+
+def test_parser_rejects_duplicate_time_without_database_conflict() -> None:
+    document = forecast_document()
+    document["hourly"]["time"][1] = document["hourly"]["time"][0]
+
+    parsed = OpenMeteoMarineParser().parse(dataset(document))
+
+    assert len(parsed.records) == 1
+    assert parsed.records_rejected == 1
+    assert parsed.quality_counts == {"invalid_timestamp": 1}
 
 
 def test_provider_uses_bounded_utc_sea_cell_request() -> None:

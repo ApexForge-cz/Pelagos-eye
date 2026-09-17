@@ -23,6 +23,16 @@ VALUE_FIELDS = {
     "sea_level_height_msl": ("sea_level_height_msl_m", -20.0, 20.0),
 }
 
+EXPECTED_UNITS = {
+    "wave_height": "m",
+    "wave_direction": "°",
+    "wave_period": "s",
+    "sea_surface_temperature": "°C",
+    "ocean_current_velocity": "km/h",
+    "ocean_current_direction": "°",
+    "sea_level_height_msl": "m",
+}
+
 
 class OpenMeteoMarineParser:
     normalization_version = "open-meteo-marine-v1"
@@ -45,21 +55,37 @@ class OpenMeteoMarineParser:
         times = hourly.get("time")
         if not isinstance(times, list):
             raise MarineSchemaError("Open-Meteo hourly time array is missing")
+        if len(times) != dataset.request.forecast_hours:
+            raise MarineSchemaError(
+                "Open-Meteo hourly time array does not match requested forecast_hours"
+            )
+        if units.get("time") != "iso8601":
+            raise MarineSchemaError("Open-Meteo hourly time unit is not iso8601")
         for variable in dataset.request.variables:
             values = hourly.get(variable)
             unit = units.get(variable)
             if not isinstance(values, list) or len(values) != len(times):
                 raise MarineSchemaError(f"Open-Meteo {variable} array is missing or misaligned")
-            if not isinstance(unit, str) or not unit:
-                raise MarineSchemaError(f"Open-Meteo {variable} unit is missing")
+            if unit != EXPECTED_UNITS[variable]:
+                raise MarineSchemaError(
+                    f"Open-Meteo {variable} unit changed from {EXPECTED_UNITS[variable]}"
+                )
 
         quality: Counter[str] = Counter()
         records: list[NormalizedMarineForecastPoint] = []
         rejected = 0
+        previous_time: datetime | None = None
         for index, raw_time in enumerate(times):
             try:
                 valid_at = _timestamp(raw_time)
-                parsed_values: dict[str, float | None] = {}
+                if previous_time is not None and valid_at <= previous_time:
+                    raise MarineSchemaError(
+                        "invalid_timestamp: hourly times must be unique and increasing"
+                    )
+                previous_time = valid_at
+                parsed_values: dict[str, float | None] = {
+                    target: None for target, _, _ in VALUE_FIELDS.values()
+                }
                 missing = 0
                 raw_record: dict[str, Any] = {"time": raw_time}
                 for variable in dataset.request.variables:

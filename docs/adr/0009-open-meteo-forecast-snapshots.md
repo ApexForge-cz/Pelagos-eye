@@ -23,9 +23,9 @@ provenance hard to control.
   and store the latter as PostGIS geography SRID 4326.
 - Preserve units, valid time, retrieval time, request parameters, response checksum, raw
   response artifact, normalization version, and row-level quality flags.
-- Reject misaligned arrays, non-UTC responses, invalid coordinates, out-of-range values,
-  and rows for which every requested value is null. Never replace missing values with
-  zero.
+- Reject misaligned or truncated arrays, changed units, non-UTC responses, invalid
+  coordinates, duplicate/non-increasing times, out-of-range values, and rows for which
+  every requested value is null. Never replace missing values with zero.
 - Store forecast snapshots by source version, request key, and valid time. The API does
   not expose a forecast issue timestamp, so the content checksum participates in the
   source version rather than inventing a model-run time.

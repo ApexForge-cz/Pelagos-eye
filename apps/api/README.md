@@ -52,3 +52,18 @@ its downloaded artifact local until a release-time terms review is completed.
 
 These endpoints expose metadata only. They do not return port records or bypass the WPI
 redistribution gate.
+
+## Official USGS earthquake import
+
+Import the official all-earthquakes past-hour GeoJSON feed:
+
+```bash
+uv run oceanscope-import-earthquakes --code-revision "$(git rev-parse HEAD)"
+```
+
+Each feed generation is checksummed and recorded as a source version. Events are keyed by
+the stable USGS event ID; only a strictly newer provider `updated` timestamp replaces the
+stored observation. Event time, provider update time, feed generation time, retrieval
+time, depth in kilometres, WGS 84 point, raw feature, and provenance remain distinct.
+Repeated unchanged events are counted without creating duplicates. The `tsunami` field is
+stored as provider metadata and is not an OceanScope prediction or warning.

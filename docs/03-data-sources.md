@@ -190,6 +190,7 @@ Serve a cached forecast only within an explicit age threshold and retain its ori
 
 - Feed directory: <https://earthquake.usgs.gov/earthquakes/feed/>
 - GeoJSON summary format: <https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php>
+- Integrated past-hour feed: <https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson>
 - FDSN event service: <https://earthquake.usgs.gov/fdsnws/event/1/>
 - USGS copyright guidance: <https://www.usgs.gov/faqs/are-usgs-reportspublications-copyrighted>
 
@@ -200,6 +201,8 @@ Serve a cached forecast only within an explicit age threshold and retain its ori
 - A `FeatureCollection` includes generation metadata, bounding box, and point features.
 - Relevant properties include magnitude, place, event time, updated time, detail URL, status, tsunami flag, significance and network/code fields; geometry coordinates are longitude, latitude, depth.
 - Use the FDSN event API for bounded custom/history queries, not high-frequency recreation of standard feeds.
+- The Phase 2 importer pins each feed generation and content checksum, validates point
+  geometry/timestamps, and upserts only when the provider `updated` time advances.
 
 ### Data semantics
 

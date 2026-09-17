@@ -72,6 +72,12 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
   an official daily bulk archive, requires explicit U.S.-water spatial/time bounds and a
   record cap, preserves the raw checksum and requested scope, and reports truncation and
   archive/schema failures without implying global or complete receiver coverage.
+- R-09, R-10, and R-32 now have a minimal UI control: the source-status surface reads the
+  provenance APIs, shows textual controlled states, timestamps, current cache age,
+  attribution, redistribution state, accepted/rejected counts, and quality issues. It
+  returns `DATA UNAVAILABLE` on request failure and never substitutes placeholder values.
+- R-18 has automated responsive CSS coverage but still needs manual browser/device visual
+  review before the Phase 2 gate; the current automation environment exposed no browser.
 
 ## Review protocol
 

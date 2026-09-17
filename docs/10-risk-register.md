@@ -64,6 +64,10 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
 - R-26 now has an implemented first control: USGS events update only when the provider
   `updated` timestamp advances, while feed versions and raw artifacts remain traceable.
   Deletion/retraction polling and downstream recomputation remain future work.
+- R-27 now has an implemented first control: bounded Open-Meteo imports preserve requested
+  and selected-grid coordinates, UTC valid time, units, request parameters, checksums,
+  raw artifacts, and model-data warnings. Public display, explicit cache-age policy, and
+  model-resolution presentation remain future work.
 
 ## Review protocol
 

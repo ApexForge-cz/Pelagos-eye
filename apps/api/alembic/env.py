@@ -6,6 +6,7 @@ from alembic import context
 from oceanscope_api.core.settings import get_settings
 from oceanscope_api.db.base import Base
 from oceanscope_api.earthquakes import models as earthquake_models  # noqa: F401
+from oceanscope_api.ocean import models as ocean_models  # noqa: F401
 from oceanscope_api.ports import models as port_models  # noqa: F401
 from oceanscope_api.provenance import models as provenance_models  # noqa: F401
 

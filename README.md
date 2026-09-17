@@ -5,7 +5,7 @@
 
 **Status: 🚧 Phase 2 — Real Data Foundation**
 
-OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phases 0 and 1 are complete. Phase 2 now includes the shared provenance foundation, internal reproducible imports of official UNECE UN/LOCODE and NGA World Port Index records, minute-updated USGS earthquake ingestion, and read-only source/system status APIs. No public event/port-record API, map layer, or production deployment is claimed yet.
+OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phases 0 and 1 are complete. Phase 2 now includes the shared provenance foundation, internal reproducible imports of official UNECE UN/LOCODE and NGA World Port Index records, minute-updated USGS earthquake ingestion, bounded Open-Meteo marine forecast ingestion, and read-only source/system status APIs. No public event/forecast/port-record API, map layer, or production deployment is claimed yet.
 
 ## Project Vision
 
@@ -27,7 +27,8 @@ The project is intentionally designed for one developer: a modular monolith, rep
 | Vessel and port search/detail views                   | Planned              |
 | Historical AIS playback and traffic analytics         | Planned              |
 | Heatmaps, routes, trends, and geofences               | Planned              |
-| Waves, swell, sea-surface temperature, and currents   | Planned              |
+| Bounded marine forecast ingestion                     | Implemented, internal |
+| Ocean map layers and forecast query API               | Planned              |
 | Global earthquake reference ingestion                 | Implemented, internal |
 | Speed, course, dwell, and AIS-gap anomaly detection   | Planned              |
 | Data provenance, freshness, and system health         | In progress          |
@@ -103,7 +104,7 @@ Detailed objectives, dependencies, risks, acceptance criteria, and definitions o
 
 ## Development Status
 
-Phases 0 and 1 are complete. Phase 2 has connected three official sources behind the source catalog, source-version, ingestion-run, and quality-issue contracts. UN/LOCODE, WPI, and the USGS past-hour earthquake feed can be imported into PostGIS with checksummed raw artifacts, strict validation, and idempotent/revision-aware writes. Read-only `/data/sources` and `/system/status` APIs expose provenance and honest availability without exposing WPI or event records. Public record APIs, entity resolution, map features, production deployment, and live AIS remain unfinished.
+Phases 0 and 1 are complete. Phase 2 has connected four official source families behind the source catalog, source-version, ingestion-run, and quality-issue contracts. UN/LOCODE, WPI, the USGS past-hour earthquake feed, and bounded Open-Meteo marine forecasts can be imported into PostGIS with checksummed raw artifacts, strict validation, and idempotent or version-aware writes. Read-only `/data/sources` and `/system/status` APIs expose provenance and honest availability without exposing source records. Public record/forecast APIs, cache fallback, entity resolution, map features, production deployment, and live AIS remain unfinished.
 
 ## Development Quick Start
 

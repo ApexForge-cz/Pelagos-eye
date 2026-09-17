@@ -18,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 oceanscope-import-earthquakes = "oceanscope_api.earthquakes.cli:main"
+oceanscope-import-marine = "oceanscope_api.ocean.cli:main"
 oceanscope-import-ports = "oceanscope_api.ports.cli:main"
 
 [dependency-groups]

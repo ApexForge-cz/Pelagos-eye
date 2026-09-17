@@ -180,6 +180,16 @@ The free endpoint requires no API key but is non-commercial, has no uptime guara
 - Do not call a modeled value an observation.
 - Avoid dense per-pixel browser calls; obtain bounded grids/points through the backend and respect call accounting.
 
+### Implemented Phase 2 boundary
+
+The internal importer accepts one coordinate and 1–168 forecast hours per invocation. It
+requests GMT, sea-cell selection, and the `best_match` routing mode for seven explicitly
+supported variables. It stores requested and selected-grid coordinates separately,
+preserves units and UTC valid times, retains a checksummed raw response, and rejects
+misaligned, invalid, or entirely null rows without zero-fill. `best_match` is not treated
+as proof of one underlying model. Public queries, scheduled refresh, and cache fallback
+remain unimplemented.
+
 ### Fallback
 
 Serve a cached forecast only within an explicit age threshold and retain its original valid time. If switching models, surface the model change; otherwise show unavailable.

@@ -61,6 +61,9 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
 - The UN/LOCODE and WPI download/parse/persist paths have local real-data evidence. WPI
   redistribution remains `unreviewed`, and neither source has a public data route or
   production deployment. Other providers and cache policies remain unvalidated.
+- R-26 now has an implemented first control: USGS events update only when the provider
+  `updated` timestamp advances, while feed versions and raw artifacts remain traceable.
+  Deletion/retraction polling and downstream recomputation remain future work.
 
 ## Review protocol
 

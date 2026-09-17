@@ -10,6 +10,7 @@ Proposed decisions remain open and must not be treated as final.
 | [0003](0003-runtime-contracts.md) | Configuration, logging, health, and errors | Accepted |
 | [0004](0004-local-infrastructure.md) | Local infrastructure and initial deployment posture | Accepted |
 | [0005](0005-license.md) | Source-code license | Accepted — MIT |
+| [0006](0006-provenance-schema.md) | Source catalog and ingestion provenance foundation | Accepted |
 
 Later GIS, live-event durability, AIS retention, raw artifact storage, and authentication
 decisions remain deferred until the relevant phase has evidence.

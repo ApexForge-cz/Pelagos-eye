@@ -45,7 +45,21 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
 4. Set a monthly hosting/storage budget ceiling.
 5. Accept that initial historical analysis is U.S.-water only or fund/approve another global archive.
 
+## Phase 2 entry review — 2026-09-17
+
+- R-09 and R-23 are active source gates. Provider adapters cannot begin until current
+  official terms, attribution, release identifiers, and schemas are reverified.
+- R-10, R-11, and R-13 are addressed first through explicit source states, UTC-aware
+  timestamps, versioned ingestion runs, quality counts, and idempotency keys.
+- R-21 remains a hard scope boundary: MarineCadastre may support only bounded U.S.-water
+  historical work and cannot justify global historical claims.
+- R-24 remains deferred until UN/LOCODE and WPI source records exist; no name-only port
+  merge is authorized.
+- R-30 mitigation has started with a dedicated PostGIS upgrade/downgrade/upgrade test for
+  the provenance migration. Backup and restore rehearsal remains a later release gate.
+- No provider, dataset, redistribution permission, cache policy, or production data path
+  is considered validated merely because the shared provenance schema exists.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.
-

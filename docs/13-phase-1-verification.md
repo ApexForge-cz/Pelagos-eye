@@ -50,6 +50,6 @@ Additional checks:
   persistence.
 - No maritime provider, production database schema, map feature, or live-data service
   has been implemented.
-- Phase 2 remains planned and has not started.
+- At Phase 1 gate closure, Phase 2 remained planned and had not started.
 
 The Phase 1 acceptance gate is complete.

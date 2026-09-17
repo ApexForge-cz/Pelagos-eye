@@ -3,7 +3,7 @@
 > Global Maritime Situational Awareness & Analytics Platform<br>
 > 全球港航态势感知与智能分析平台
 
-**Status: **Status: ✅ Phase 1 Complete****
+**Status: ✅ Phase 1 — Engineering Foundation Complete**
 
 OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phase 0 planning is complete and Phase 1 now contains the minimal engineering foundation. No maritime data integration or production application is claimed.
 

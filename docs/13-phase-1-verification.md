@@ -32,25 +32,24 @@
 - API and Web images built successfully
 - Four Compose services started successfully
 - All three HTTP health checks returned HTTP/1.1 200
-- Pending Docker Desktop repair and container build
 
 Additional checks:
 
+- GitHub Actions run `35123661340` passed backend, frontend, and Gitleaks jobs.
 - `docker compose config --quiet`: passed with ephemeral local validation variables
 - `alembic upgrade head --sql`: generated a valid empty baseline migration
-- `npm audit --registry=https://registry.npmjs.org --audit-level=high`: 0 vulnerabilities
+- `npm audit --registry=https://registry.npmjs.org --audit-level=high`: 0
+  vulnerabilities
 - `git diff --check`: passed after whitespace cleanup
-- Forbidden aviation terminology and fake-data patterns: no matches in maintained source/docs
+- Forbidden aviation terminology and fake-data patterns: no matches in maintained
+  source/docs
 
-## Pending evidence
+## Remaining limitations
 
-- Docker image build could not run. Docker Desktop 4.70.0 was started, but its backend
-  crashed while initializing the Inference manager because its local `dockerInference`
-  runtime path could not be accessed. Resetting Docker Desktop may affect local container
-  state, so no reset was attempted automatically.
-- GitHub Actions run `35123661340` passed backend, frontend, and Gitleaks jobs after the
-  pinned actions were upgraded to Node.js 24-compatible releases.
-- No PostGIS/Redis integration test exists yet because Phase 1 has no domain persistence.
+- No PostGIS/Redis integration test exists yet because Phase 1 contains no domain
+  persistence.
+- No maritime provider, production database schema, map feature, or live-data service
+  has been implemented.
+- Phase 2 remains planned and has not started.
 
-Phase 1 must remain **In progress** until the container build is green. This does not block
-local API/web development, but it blocks claiming the phase gate is complete.
+The Phase 1 acceptance gate is complete.

@@ -2,23 +2,33 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import Literal, cast
 
 from oceanscope_api import __version__
-from oceanscope_api.provenance.models import IngestionStatus, SourceState
+from oceanscope_api.provenance.models import IngestionStatus
 from oceanscope_api.status.contracts import (
+    SourceAvailabilitySnapshot,
     SourceStatus,
     SourceStatusRepository,
     SystemDependencyStatus,
     SystemStatus,
 )
+from oceanscope_api.status.freshness import evaluate_freshness, policy_for
 
 
 class SourceStatusService:
-    def __init__(self, repository: SourceStatusRepository) -> None:
+    def __init__(
+        self,
+        repository: SourceStatusRepository,
+        *,
+        now: Callable[[], datetime] | None = None,
+    ) -> None:
         self._repository = repository
+        self._now = now or (lambda: datetime.now(UTC))
 
     def list_sources(self) -> list[SourceStatus]:
         results: list[SourceStatus] = []
+        now = self._now()
         for history in self._repository.list_source_histories():
             latest_run = history.runs[0] if history.runs else None
             latest_usable_run = next(
@@ -38,8 +48,12 @@ class SourceStatusService:
             latest_version = (
                 versions_by_id.get(usable_version_id) if usable_version_id is not None else None
             )
-            current_state = (
-                latest_run.source_state if latest_run is not None else SourceState.OFFLINE.value
+            freshness = evaluate_freshness(
+                policy=policy_for(history.slug),
+                latest_run=latest_run,
+                usable_run=latest_usable_run,
+                usable_version=latest_version,
+                now=now,
             )
             usable_quality = (
                 tuple(
@@ -59,11 +73,11 @@ class SourceStatusService:
                     attribution_text=history.attribution_text,
                     license_identifier=history.license_identifier,
                     redistribution_status=history.redistribution_status,
-                    state=current_state,
-                    availability=(
-                        "AVAILABLE" if latest_usable_run is not None else "DATA UNAVAILABLE"
-                    ),
-                    has_usable_data=latest_usable_run is not None,
+                    state=freshness.state,
+                    availability="AVAILABLE" if freshness.available else "DATA UNAVAILABLE",
+                    has_usable_data=freshness.available,
+                    cache_age_seconds=freshness.cache_age_seconds,
+                    freshness=freshness.snapshot,
                     latest_run=latest_run,
                     latest_usable_run=latest_usable_run,
                     latest_version=latest_version,
@@ -71,6 +85,19 @@ class SourceStatusService:
                 )
             )
         return results
+
+    def get_source_availability(self, slug: str) -> SourceAvailabilitySnapshot | None:
+        status = next((source for source in self.list_sources() if source.slug == slug), None)
+        if status is None:
+            return None
+        return SourceAvailabilitySnapshot(
+            state=cast(
+                Literal["LIVE", "CACHED", "DELAYED", "OFFLINE"],
+                status.state,
+            ),
+            has_usable_data=status.has_usable_data,
+            cache_age_seconds=status.cache_age_seconds,
+        )
 
 
 class SystemStatusService:

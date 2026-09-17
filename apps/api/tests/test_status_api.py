@@ -9,6 +9,7 @@ from oceanscope_api.api.routes.system import get_system_status_service
 from oceanscope_api.core.errors import DatabaseUnavailableError
 from oceanscope_api.main import app
 from oceanscope_api.status.contracts import (
+    FreshnessSnapshot,
     IngestionRunSnapshot,
     SourceStatus,
     SourceVersionSnapshot,
@@ -59,6 +60,13 @@ class StubSourceStatusService:
                 state="LIVE",
                 availability="AVAILABLE",
                 has_usable_data=True,
+                cache_age_seconds=None,
+                freshness=FreshnessSnapshot(
+                    age_seconds=0,
+                    live_ttl_seconds=300,
+                    delayed_ttl_seconds=900,
+                    cache_ttl_seconds=3600,
+                ),
                 latest_run=run,
                 latest_usable_run=run,
                 latest_version=version,
@@ -80,6 +88,8 @@ def test_data_sources_endpoint_exposes_typed_provenance() -> None:
     assert source["state"] == "LIVE"
     assert source["latest_version"]["data_version"] == "TEST-DATA-1"
     assert source["latest_run"]["id"] == "00000000-0000-0000-0000-000000000002"
+    assert source["freshness"]["live_ttl_seconds"] == 300
+    assert source["cache_age_seconds"] is None
 
 
 def test_data_sources_endpoint_returns_problem_when_database_is_unavailable() -> None:

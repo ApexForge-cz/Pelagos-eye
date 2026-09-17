@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from oceanscope_api.core.errors import InvalidQueryError, SourceDataUnavailableError
 from oceanscope_api.earthquakes.artifacts import EarthquakeArtifactStore
 from oceanscope_api.earthquakes.contracts import (
     EarthquakeDataError,
     EarthquakeFeedParser,
     EarthquakeFeedProvider,
+    EarthquakeSearchQuery,
+    EarthquakeSearchRepository,
+    EarthquakeSearchResult,
 )
 from oceanscope_api.earthquakes.repository import SqlAlchemyEarthquakeRepository
 from oceanscope_api.ports.contracts import PortDataError
@@ -28,6 +32,7 @@ from oceanscope_api.provenance.service import (
     RegisterSourceVersion,
     StartIngestionRun,
 )
+from oceanscope_api.status.contracts import SourceAvailabilityLookup
 
 
 @dataclass(frozen=True)
@@ -43,6 +48,45 @@ class EarthquakeImportReport:
     unchanged: int
     stale_revisions: int
     artifact_reference: str
+
+
+class EarthquakeSearchService:
+    def __init__(
+        self,
+        repository: EarthquakeSearchRepository,
+        source_availability: SourceAvailabilityLookup | None = None,
+    ) -> None:
+        self._repository = repository
+        self._source_availability = source_availability
+
+    def search(self, query: EarthquakeSearchQuery) -> EarthquakeSearchResult:
+        if query.start_at.tzinfo is None or query.end_at.tzinfo is None:
+            raise InvalidQueryError("start_at and end_at must include UTC offsets")
+        if query.start_at >= query.end_at:
+            raise InvalidQueryError("start_at must be earlier than end_at")
+        if query.end_at - query.start_at > timedelta(days=31):
+            raise InvalidQueryError("the time window cannot exceed 31 days")
+        if query.min_longitude >= query.max_longitude:
+            raise InvalidQueryError("min_longitude must be less than max_longitude")
+        if query.min_latitude >= query.max_latitude:
+            raise InvalidQueryError("min_latitude must be less than max_latitude")
+        if self._source_availability is None:
+            return self._repository.search(query)
+        availability = self._source_availability.get_source_availability("usgs-earthquakes")
+        if availability is None or not availability.has_usable_data:
+            raise SourceDataUnavailableError("USGS earthquake data is unavailable")
+        result = self._repository.search(query)
+        return replace(
+            result,
+            records=tuple(
+                replace(
+                    record,
+                    source_state=availability.state,
+                    cache_age_seconds=availability.cache_age_seconds,
+                )
+                for record in result.records
+            ),
+        )
 
 
 class EarthquakeImportService:

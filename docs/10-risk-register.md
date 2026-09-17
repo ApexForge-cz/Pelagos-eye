@@ -79,6 +79,25 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
 - R-18 has automated responsive CSS coverage but still needs manual browser/device visual
   review before the Phase 2 gate; the current automation environment exposed no browser.
 
+## Phase 2 gate review - 2026-09-18
+
+- R-09 remains an active release gate. Public record repositories require
+  `redistribution_status = allowed`; WPI (`unreviewed`) and MarineCadastre AIS
+  (`restricted`) cannot cross the public query boundary.
+- R-10 now has tested per-provider freshness and maximum-cache policies. Status and record
+  APIs share the same decision, label usable fallback `CACHED` with age, and return
+  `DATA UNAVAILABLE` after expiry instead of presenting stale data as current.
+- R-21 remains enforced in importer bounds, API scope, UI copy, and documentation. The
+  stored MarineCadastre slice is described only as bounded U.S.-water historical data.
+- R-22 is mitigated for the Phase 2 scope by the checksum-pinned official daily bulk
+  archive path. AccessAIS ordering availability is not required by the implemented import.
+- R-23 has schema/version checks, bounded downloads, typed adapters, rejection and quality
+  reporting, and source-version pinning. A breaking provider response fails the run rather
+  than entering production storage silently.
+- R-18 retains one verification gap: automated component, responsive-style, TypeScript,
+  and production-build checks pass, but a supported-browser visual review must be recorded
+  before the Phase 2 gate closes.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

@@ -3,9 +3,9 @@
 > Global Maritime Situational Awareness & Analytics Platform<br>
 > 全球港航态势感知与智能分析平台
 
-**Status: 🚧 Phase 2 — Real Data Foundation**
+**Status: Phase 2 Complete — Real Data Foundation**
 
-OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phases 0 and 1 are complete. Phase 2 now includes the shared provenance foundation, internal reproducible imports of official UNECE UN/LOCODE and NGA World Port Index records, minute-updated USGS earthquake ingestion, bounded Open-Meteo marine forecast ingestion, bounded NOAA MarineCadastre historical AIS ingestion, read-only source/system status APIs, and a minimal real-data status UI. No public record API, map layer, or production deployment is claimed yet.
+OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phases 0 through 2 are complete. Phase 2 includes the shared provenance foundation, internal reproducible imports of official UNECE UN/LOCODE and NGA World Port Index records, minute-updated USGS earthquake ingestion, bounded Open-Meteo marine forecast ingestion, bounded NOAA MarineCadastre historical AIS ingestion, read-only source/system status APIs with computed freshness and bounded cache fallback, bounded public UN/LOCODE, USGS earthquake, and Open-Meteo forecast queries, and a minimal real-data status UI. No public WPI or restricted historical-AIS record API, map layer, or production deployment is claimed yet.
 
 ## Project Vision
 
@@ -29,11 +29,14 @@ The project is intentionally designed for one developer: a modular monolith, rep
 | Historical AIS playback and traffic analytics         | Planned              |
 | Heatmaps, routes, trends, and geofences               | Planned              |
 | Bounded marine forecast ingestion                     | Implemented, internal |
-| Ocean map layers and forecast query API               | Planned              |
+| Bounded marine forecast query API                     | Implemented, local    |
+| Ocean map layers                                      | Planned              |
 | Global earthquake reference ingestion                 | Implemented, internal |
+| Bounded USGS earthquake query API                     | Implemented, local    |
 | Speed, course, dwell, and AIS-gap anomaly detection   | Planned              |
-| Data provenance, freshness, and system health         | In progress          |
+| Data provenance, freshness, and system health         | Implemented, local   |
 | Official port-reference ingestion                     | Implemented, internal |
+| Bounded UN/LOCODE port query API                      | Implemented, local    |
 | Source catalog and system status APIs                  | Implemented, internal |
 | Real-data source status web UI                         | Implemented, local    |
 | Assisted maritime situation analysis                  | Planned, later phase |
@@ -92,7 +95,7 @@ See [docs/03-data-sources.md](docs/03-data-sources.md) for verified endpoints, f
 | ----- | ---------------------- | -------- |
 | 0     | Research & Planning    | Complete |
 | 1     | Engineering Foundation | Complete |
-| 2     | Real Data Foundation   | In progress |
+| 2     | Real Data Foundation   | Complete |
 | 3     | Digital Earth          | Planned  |
 | 4     | Live AIS               | Planned  |
 | 5     | Historical Analytics   | Planned  |
@@ -106,7 +109,7 @@ Detailed objectives, dependencies, risks, acceptance criteria, and definitions o
 
 ## Development Status
 
-Phases 0 and 1 are complete. Phase 2 has connected five official source families behind the source catalog, source-version, ingestion-run, and quality-issue contracts. UN/LOCODE, WPI, the USGS past-hour earthquake feed, bounded Open-Meteo marine forecasts, and bounded NOAA MarineCadastre historical AIS slices can be imported into PostGIS with checksummed raw artifacts, strict validation, and idempotent or version-aware writes. Read-only `/data/sources` and `/system/status` APIs and the minimal web status surface expose provenance and honest availability without exposing source records. Public record/forecast APIs, cache fallback, entity resolution, map features, production deployment, and live AIS remain unfinished.
+Phases 0 through 2 are complete. Phase 2 connected five official source families behind the source catalog, source-version, ingestion-run, and quality-issue contracts. UN/LOCODE, WPI, the USGS past-hour earthquake feed, bounded Open-Meteo marine forecasts, and bounded NOAA MarineCadastre historical AIS slices can be imported into PostGIS with checksummed raw artifacts, strict validation, and idempotent or version-aware writes. Each ingestion run can be exported as an internal reproducibility manifest containing its source/version, checksum, artifact reference, parameters, code revision, counts, and quality issues. Read-only `/data/sources` and `/system/status` APIs and the minimal web status surface expose provenance and compute source state from explicit per-provider freshness and stale-cache windows. A failed refresh uses the last verified version only inside its approved window and labels it `CACHED` with age; expired or absent data is `DATA UNAVAILABLE`. `GET /ports` exposes a bounded, paginated UN/LOCODE query; `GET /earthquakes` requires bounded time and WGS 84 spatial ranges; `GET /ocean/forecast` returns the latest stored forecast for an exact requested coordinate and bounded time window. All return record-level provenance. Records from sources without approved redistribution status, including WPI and restricted MarineCadastre AIS records, are filtered from public record APIs. Scheduled refresh, entity resolution, map features, production deployment, and live AIS remain unfinished.
 
 ## Development Quick Start
 
@@ -125,9 +128,15 @@ uv run --directory apps/api uvicorn oceanscope_api.main:app --reload
 npm run web:dev
 ```
 
-The API exposes `/health/live`, `/health/ready`, `/data/sources`, and `/system/status`.
+The API exposes `/health/live`, `/health/ready`, `/ports`, `/earthquakes`, `/ocean/forecast`, `/data/sources`, and `/system/status`.
 The web application is a Phase 2 source-status surface backed by the API. It intentionally
 contains no simulated business dashboard or maritime record layer.
+
+Export an internal reproducibility manifest for a known ingestion run with:
+
+```bash
+uv run --directory apps/api oceanscope-export-manifest --ingestion-run-id <uuid>
+```
 
 ## Data Integrity Principles
 

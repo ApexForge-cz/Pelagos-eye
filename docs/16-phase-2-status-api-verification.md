@@ -11,10 +11,12 @@ sources. Each source includes official and terms URLs, attribution, license iden
 redistribution review state, the controlled `LIVE`/`CACHED`/`DELAYED`/`OFFLINE` state,
 availability, latest run, latest usable run/version, counts, and quality findings.
 
-The current run is intentionally separate from the latest usable run. If a new provider
-attempt fails after an older successful import, the source reports the current failure as
-`OFFLINE` while disclosing that an older traceable version exists. It does not silently
-label that version `LIVE` or `CACHED` without an approved cache policy.
+The current run is intentionally separate from the latest usable run. Source state is
+computed at request time from the source-specific freshness policy, the usable version's
+retrieval time, any initial cache age, and the latest ingestion attempt. If a new provider
+attempt fails after an older successful import, the source reports `CACHED` with age only
+while that version remains inside the approved stale window. Expired data becomes
+`OFFLINE` / `DATA UNAVAILABLE`.
 
 `GET /system/status` returns the application version and database probe result. A missing
 or unreachable database produces `DEGRADED`, database `OFFLINE`, and `DATA UNAVAILABLE`.
@@ -42,8 +44,12 @@ Automated API tests also cover an unavailable database, a source with no ingesti
 history, and a failed latest run with an older usable version. All fixtures are labeled
 `TEST DATA` and remain isolated from production configuration.
 
+The original verification predated the explicit freshness policy. The policy extension and
+its current validation evidence are recorded in
+`docs/24-phase-2-freshness-cache-policy-verification.md`.
+
 ## Remaining boundary
 
-The API exposes provenance metadata only. It does not return WPI or UN/LOCODE port rows,
-perform canonical port matching, establish a cache TTL, or implement the planned frontend
-screens. WPI redistribution remains `unreviewed`.
+The API exposes source metadata and does not bypass record-level redistribution gates.
+WPI redistribution remains `unreviewed`; MarineCadastre record redistribution remains
+`restricted`. Scheduled ingestion and active provider probes remain separate work.

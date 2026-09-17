@@ -26,6 +26,13 @@ const sourceCatalog = {
       state: 'CACHED',
       availability: 'AVAILABLE',
       has_usable_data: true,
+      cache_age_seconds: 1501,
+      freshness: {
+        age_seconds: 1501,
+        live_ttl_seconds: 86400,
+        delayed_ttl_seconds: 86400,
+        cache_ttl_seconds: null,
+      },
       latest_run: {
         id: '00000000-0000-0000-0000-000000000001',
         status: 'partial',

@@ -46,6 +46,15 @@ class SourceVersionResponse(BaseModel):
     retrieved_at: datetime
 
 
+class FreshnessResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
+
+    age_seconds: int | None
+    live_ttl_seconds: int
+    delayed_ttl_seconds: int
+    cache_ttl_seconds: int | None
+
+
 class SourceStatusResponse(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
@@ -59,6 +68,8 @@ class SourceStatusResponse(BaseModel):
     state: Literal["LIVE", "CACHED", "DELAYED", "OFFLINE"]
     availability: Literal["AVAILABLE", "DATA UNAVAILABLE"]
     has_usable_data: bool
+    cache_age_seconds: int | None
+    freshness: FreshnessResponse
     latest_run: IngestionRunResponse | None
     latest_usable_run: IngestionRunResponse | None
     latest_version: SourceVersionResponse | None

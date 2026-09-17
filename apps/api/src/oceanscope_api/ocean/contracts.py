@@ -4,7 +4,8 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
+from uuid import UUID
 
 from oceanscope_api.ports.contracts import SourceDescriptor
 
@@ -121,3 +122,55 @@ class MarineForecastParser(Protocol):
     normalization_version: str
 
     def parse(self, dataset: FetchedMarineForecast) -> MarineForecastParseResult: ...
+
+
+@dataclass(frozen=True)
+class MarineForecastQuery:
+    latitude: float
+    longitude: float
+    start_at: datetime
+    end_at: datetime
+    limit: int = 168
+    offset: int = 0
+
+
+@dataclass(frozen=True)
+class MarineForecastRecord:
+    id: UUID
+    requested_latitude: float
+    requested_longitude: float
+    grid_latitude: float
+    grid_longitude: float
+    valid_at: datetime
+    model: str
+    wave_height_m: float | None
+    wave_direction_deg: float | None
+    wave_period_s: float | None
+    sea_surface_temperature_c: float | None
+    ocean_current_velocity_kmh: float | None
+    ocean_current_direction_deg: float | None
+    sea_level_height_msl_m: float | None
+    units: dict[str, str]
+    quality_flags: tuple[str, ...]
+    normalized_at: datetime
+    source_slug: str
+    source_display_name: str
+    source_url: str
+    attribution_text: str
+    data_version: str
+    schema_version: str
+    published_at: datetime | None
+    retrieved_at: datetime
+    ingested_at: datetime
+    source_state: Literal["LIVE", "CACHED", "DELAYED", "OFFLINE"]
+    cache_age_seconds: int | None
+
+
+@dataclass(frozen=True)
+class MarineForecastQueryResult:
+    records: tuple[MarineForecastRecord, ...]
+    total: int
+
+
+class MarineForecastQueryRepository(Protocol):
+    def query(self, query: MarineForecastQuery) -> MarineForecastQueryResult: ...

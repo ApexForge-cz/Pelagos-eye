@@ -27,9 +27,12 @@ export function SourceCard({ source }: { source: SourceStatus }) {
           label="可用批次：接受 / 拒绝"
           value={run ? `${run.records_accepted} / ${run.records_rejected}` : '无运行记录'}
         />
-        {source.state === 'CACHED' && (
-          <Fact label="当前缓存年龄" value={formatCacheAge(source.latest_run)} />
-        )}
+        <Fact
+          label={source.state === 'CACHED' ? '当前缓存年龄' : '数据年龄'}
+          value={formatDuration(
+            source.state === 'CACHED' ? source.cache_age_seconds : source.freshness.age_seconds,
+          )}
+        />
         <Fact label="再分发" value={source.redistribution_status} />
       </dl>
 
@@ -102,15 +105,4 @@ function formatDuration(seconds: number | null | undefined) {
     return `${Math.floor(seconds / 60)} 分钟`
   }
   return `${Math.floor(seconds / 3600)} 小时 ${Math.floor((seconds % 3600) / 60)} 分钟`
-}
-
-function formatCacheAge(run: SourceStatus['latest_run']) {
-  if (!run || run.cache_age_seconds === null) {
-    return '年龄未知'
-  }
-  const startedAt = new Date(run.started_at).getTime()
-  const elapsed = Number.isNaN(startedAt)
-    ? 0
-    : Math.max(0, Math.floor((Date.now() - startedAt) / 1000))
-  return formatDuration(run.cache_age_seconds + elapsed)
 }

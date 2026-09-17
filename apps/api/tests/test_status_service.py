@@ -25,12 +25,13 @@ class StubRepository:
 
 def base_history(
     *,
+    slug: str = "test-source",
     runs: tuple[IngestionRunSnapshot, ...] = (),
     versions: tuple[SourceVersionSnapshot, ...] = (),
     issues: tuple[QualityIssueSnapshot, ...] = (),
 ) -> SourceHistory:
     return SourceHistory(
-        slug="test-source",
+        slug=slug,
         display_name="TEST DATA Source",
         official_url="https://example.test/source",
         terms_url="https://example.test/terms",
@@ -44,7 +45,9 @@ def base_history(
 
 
 def test_source_without_ingestion_is_explicitly_unavailable() -> None:
-    result = SourceStatusService(StubRepository([base_history()])).list_sources()[0]
+    result = SourceStatusService(StubRepository([base_history()]), now=lambda: NOW).list_sources()[
+        0
+    ]
 
     assert result.state == "OFFLINE"
     assert result.availability == "DATA UNAVAILABLE"
@@ -94,16 +97,102 @@ def test_failed_latest_run_does_not_relabel_older_data_as_live() -> None:
     )
 
     result = SourceStatusService(
-        StubRepository([base_history(runs=(failed, usable), versions=(version,), issues=(issue,))])
+        StubRepository([base_history(runs=(failed, usable), versions=(version,), issues=(issue,))]),
+        now=lambda: NOW + timedelta(hours=2),
     ).list_sources()[0]
 
-    assert result.state == "OFFLINE"
+    assert result.state == "CACHED"
     assert result.availability == "AVAILABLE"
     assert result.has_usable_data is True
+    assert result.cache_age_seconds == 7200
+    assert result.freshness.age_seconds == 7200
     assert result.latest_run == failed
     assert result.latest_usable_run == usable
     assert result.latest_version == version
     assert result.quality_issues == (issue,)
+
+
+def test_usgs_freshness_transitions_from_delayed_to_cached_to_offline() -> None:
+    version = SourceVersionSnapshot(
+        id=SOURCE_VERSION_ID,
+        data_version="TEST-DATA-1",
+        schema_version="test-schema-v1",
+        source_url="https://example.test/feed.geojson",
+        published_at=NOW,
+        retrieved_at=NOW,
+    )
+    usable = IngestionRunSnapshot(
+        id=USABLE_RUN_ID,
+        source_version_id=SOURCE_VERSION_ID,
+        status="succeeded",
+        source_state="LIVE",
+        cache_age_seconds=None,
+        started_at=NOW,
+        finished_at=NOW,
+        records_received=1,
+        records_accepted=1,
+        records_rejected=0,
+    )
+    history = base_history(slug="usgs-earthquakes", runs=(usable,), versions=(version,))
+
+    delayed = SourceStatusService(
+        StubRepository([history]), now=lambda: NOW + timedelta(minutes=10)
+    ).list_sources()[0]
+    cached = SourceStatusService(
+        StubRepository([history]), now=lambda: NOW + timedelta(minutes=30)
+    ).list_sources()[0]
+    offline = SourceStatusService(
+        StubRepository([history]), now=lambda: NOW + timedelta(hours=2)
+    ).list_sources()[0]
+
+    assert delayed.state == "DELAYED"
+    assert delayed.cache_age_seconds is None
+    assert cached.state == "CACHED"
+    assert cached.cache_age_seconds == 1800
+    assert offline.state == "OFFLINE"
+    assert offline.availability == "DATA UNAVAILABLE"
+    assert offline.has_usable_data is False
+
+
+def test_immutable_historical_archive_cache_does_not_expire() -> None:
+    version = SourceVersionSnapshot(
+        id=SOURCE_VERSION_ID,
+        data_version="TEST-DATA-archive",
+        schema_version="test-schema-v1",
+        source_url="https://example.test/archive.zst",
+        published_at=None,
+        retrieved_at=NOW,
+    )
+    cached_run = IngestionRunSnapshot(
+        id=USABLE_RUN_ID,
+        source_version_id=SOURCE_VERSION_ID,
+        status="succeeded",
+        source_state="CACHED",
+        cache_age_seconds=864_000,
+        started_at=NOW,
+        finished_at=NOW,
+        records_received=1,
+        records_accepted=1,
+        records_rejected=0,
+    )
+
+    result = SourceStatusService(
+        StubRepository(
+            [
+                base_history(
+                    slug="noaa-marinecadastre-ais",
+                    runs=(cached_run,),
+                    versions=(version,),
+                )
+            ]
+        ),
+        now=lambda: NOW + timedelta(days=500),
+    ).list_sources()[0]
+
+    assert result.state == "CACHED"
+    assert result.availability == "AVAILABLE"
+    assert result.freshness.cache_ttl_seconds is None
+    assert result.cache_age_seconds == 44_064_000
 
 
 def test_system_status_reports_database_state_without_fallback_values() -> None:

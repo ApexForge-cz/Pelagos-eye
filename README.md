@@ -3,9 +3,9 @@
 > Global Maritime Situational Awareness & Analytics Platform<br>
 > 全球港航态势感知与智能分析平台
 
-**Status: ✅ Phase 1 — Engineering Foundation Complete**
+**Status: 🚧 Phase 2 — Real Data Foundation**
 
-OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phase 0 planning is complete and Phase 1 now contains the minimal engineering foundation. No maritime data integration or production application is claimed.
+OceanScope is a planned, map-first web platform for exploring live and historical maritime activity, ports, ocean conditions, and risk signals. Phases 0 and 1 are complete. Phase 2 has begun with the shared provenance and ingestion-run foundation; no maritime provider integration or production application is claimed yet.
 
 ## Project Vision
 
@@ -30,7 +30,7 @@ The project is intentionally designed for one developer: a modular monolith, rep
 | Waves, swell, sea-surface temperature, and currents   | Planned              |
 | Global earthquake and maritime-risk context           | Planned              |
 | Speed, course, dwell, and AIS-gap anomaly detection   | Planned              |
-| Data provenance, freshness, and system health         | Planned              |
+| Data provenance, freshness, and system health         | In progress          |
 | Assisted maritime situation analysis                  | Planned, later phase |
 
 ## Architecture Preview
@@ -64,7 +64,7 @@ The planned deployment unit is a modular monolith plus independently runnable wo
 - Quality: pytest, Vitest, React Testing Library, Playwright, Ruff, ESLint, Prettier, strict TypeScript, practical mypy
 - Delivery: Docker, Docker Compose, GitHub Actions
 
-All technology choices remain **Planned** until validated in an Architecture Decision Record during Phase 1.
+Foundation choices are recorded in accepted Architecture Decision Records. Later-phase GIS, provider, analytical, and deployment choices remain planned until their evidence and phase gates exist.
 
 ## Real Data Sources
 
@@ -87,7 +87,7 @@ See [docs/03-data-sources.md](docs/03-data-sources.md) for verified endpoints, f
 | ----- | ---------------------- | -------- |
 | 0     | Research & Planning    | Complete |
 | 1     | Engineering Foundation | Complete |
-| 2     | Real Data Foundation   | Planned  |
+| 2     | Real Data Foundation   | In progress |
 | 3     | Digital Earth          | Planned  |
 | 4     | Live AIS               | Planned  |
 | 5     | Historical Analytics   | Planned  |
@@ -101,9 +101,9 @@ Detailed objectives, dependencies, risks, acceptance criteria, and definitions o
 
 ## Development Status
 
-Phase 0 planning is complete. Phase 1 provides a minimal React development shell, FastAPI health endpoints, typed settings, structured logging, stable error contracts, migration tooling, local Compose infrastructure, and automated quality checks. There is still no connected maritime provider, production database schema, map feature, production deployment, or live-data service.
+Phases 0 and 1 are complete. Phase 2 is establishing the source catalog, source-version, ingestion-run, and quality-issue contracts before any provider adapter is connected. There is still no connected maritime provider, port or vessel dataset, map feature, production deployment, or live-data service.
 
-## Phase 1 Quick Start
+## Development Quick Start
 
 Prerequisites: Python 3.13, [uv](https://docs.astral.sh/uv/), Node.js 24 with npm, and optionally Docker Compose.
 

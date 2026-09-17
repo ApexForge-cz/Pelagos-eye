@@ -30,5 +30,5 @@ async def liveness() -> HealthResponse:
 
 @router.get("/ready", response_model=HealthResponse)
 async def readiness() -> HealthResponse:
-    """Report Phase 1 readiness; dependency checks are added with their integrations."""
+    """Report application readiness; dependency checks follow runtime integrations."""
     return _health("ready")

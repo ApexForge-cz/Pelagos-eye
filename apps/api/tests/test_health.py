@@ -20,7 +20,7 @@ def test_liveness_reports_process_status() -> None:
     assert response.json()["service"] == "oceanscope-api"
 
 
-def test_readiness_is_explicitly_phase_one_readiness() -> None:
+def test_readiness_reports_application_status() -> None:
     response = asyncio.run(request("/health/ready"))
 
     assert response.status_code == 200

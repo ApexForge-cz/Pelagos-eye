@@ -12,6 +12,22 @@ jobs:
   backend:
     name: Backend quality gate
     runs-on: ubuntu-latest
+    env:
+      OCEANSCOPE_TEST_DATABASE_URL: postgresql+psycopg://oceanscope:oceanscope-ci-test-only@127.0.0.1:5432/oceanscope_test
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5-alpine
+        env:
+          POSTGRES_DB: oceanscope_test
+          POSTGRES_USER: oceanscope
+          POSTGRES_PASSWORD: oceanscope-ci-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U oceanscope -d oceanscope_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6

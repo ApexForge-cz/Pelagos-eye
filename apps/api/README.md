@@ -1,8 +1,9 @@
 # OceanScope API
 
-Phase 1 contains only the API engineering foundation: typed configuration,
-structured logging, stable error contracts, health endpoints, migration tooling,
-and tests. Maritime data providers and business routes begin in later phases.
+Phase 1 established typed configuration, structured logging, stable error contracts,
+health endpoints, migration tooling, and tests. Phase 2 is adding the shared source
+catalog, source-version, ingestion-run, and quality-issue contracts before any maritime
+provider adapter or business route is exposed.
 
 Run locally from this directory:
 

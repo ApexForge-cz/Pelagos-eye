@@ -68,6 +68,10 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
   and selected-grid coordinates, UTC valid time, units, request parameters, checksums,
   raw artifacts, and model-data warnings. Public display, explicit cache-age policy, and
   model-resolution presentation remain future work.
+- R-21 and R-22 now have an implemented first control: the MarineCadastre importer uses
+  an official daily bulk archive, requires explicit U.S.-water spatial/time bounds and a
+  record cap, preserves the raw checksum and requested scope, and reports truncation and
+  archive/schema failures without implying global or complete receiver coverage.
 
 ## Review protocol
 

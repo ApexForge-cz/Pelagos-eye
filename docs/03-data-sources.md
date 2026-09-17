@@ -66,6 +66,12 @@ On the verification date, the AccessAIS page reported its ordering service unava
 
 Official metadata lists fields including MMSI, `BaseDateTime` (UTC), latitude, longitude, speed over ground, course over ground, heading, vessel name, IMO identifier, call sign, vessel type, navigation status, length, width, draft, cargo, and transceiver class. Schemas differ by year; imports must select a versioned schema rather than assume all fields exist.
 
+The current official daily bulk index republishes compressed `.csv.zst` files. A verified
+2024 archive used lowercase snake-case headers such as `mmsi`, `base_date_time`,
+`longitude`, `latitude`, and `transceiver`, while older documented downloads use names
+such as `MMSI`, `BaseDateTime`, `LON`, `LAT`, and `TransceiverClass`. The importer maps
+only these verified aliases and otherwise fails as a provider revision.
+
 ### Data quality and volume
 
 - Validate year-specific metadata, geographic coverage, UTM zone/file partition, and checksum before import.
@@ -81,6 +87,20 @@ The official AIS FAQ permits derived public products and asks users to cite the 
 ### Fallback
 
 Use a locally/object-stored copy only when redistribution and storage terms allow, with original URL, retrieval time, checksum, archive year/zone, and citation. If neither AccessAIS nor verified bulk archives are available, disable the affected date/area rather than substitute data.
+
+### Implemented Phase 2 boundary
+
+The internal importer constructs an official daily archive URL from an explicit UTC date
+in the verified 2015–2025 schema range. Every run requires a non-antimeridian WGS 84 box
+no larger than 5° by 5°, a UTC window no longer than six hours within that date, and a
+record cap of at most 100,000. Download size and scanned-row limits are enforced. The
+parser streams Zstandard data, validates identifiers, times and coordinates, treats AIS
+sentinels as missing rather than zero, preserves fallible static fields as observations,
+deduplicates exact records, and reports filtered, rejected, duplicate, and cap-truncated
+counts separately. The raw archive remains internal with restricted redistribution state.
+Direct official downloads are labeled `LIVE`; a checksummed local archive replay is
+labeled `CACHED` with its age.
+No global, live, ownership, or complete-coverage claim is made.
 
 ## 3. UNECE UN/LOCODE
 

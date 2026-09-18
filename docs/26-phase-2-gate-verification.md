@@ -62,3 +62,26 @@ checks passed, but manual responsive visual inspection remains outstanding.
   restricted from public record APIs
 - canonical port entity resolution, map rendering, live AIS, and production deployment
   belong to later phases
+
+## Post-gate revalidation (2026-09-18)
+
+The owner-requested Phase 0-2 recheck passed without changing the gate decision:
+
+- all four Compose services were running; PostGIS, Redis, and API reported healthy
+- Linux backend suite: 84 passed, 1 skipped, 73% coverage; the skipped destructive
+  migration test then passed separately against disposable database
+  `oceanscope_phase02_recheck_20260918_test`, which was removed after the run
+- Ruff format/lint and strict mypy passed in the Linux API container
+- frontend Prettier, ESLint, Vitest (2 tests), TypeScript, and Vite build passed
+- live container APIs returned 200 for health, readiness, source catalog, system status,
+  ports, and the stored Open-Meteo query; expired USGS data returned the expected
+  structured 503 instead of fabricated fallback values
+- PostGIS contained 20,526 port-source rows, 4 earthquake events, 48 marine forecast
+  points, 5,000 bounded historical AIS positions, 5 source definitions, 6 source versions,
+  and 10 ingestion runs
+- the V2.1 project-plan PDF was regenerated from its Markdown source and inspected across
+  all 28 rendered pages; no empty pages, clipped page blocks, replacement characters, or
+  placeholders remained
+
+A browser surface was unavailable to the automation environment, so supported-browser
+manual responsive and accessibility review remains the same explicit non-blocking follow-up.

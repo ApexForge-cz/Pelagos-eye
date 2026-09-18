@@ -6,9 +6,10 @@
 
 ## Context
 
-OceanScope is maintained by one developer but will eventually contain a web client,
-API, ingestion workers, spatial storage, and analytical jobs. Separate repositories or
-premature microservices would increase release and operational work before measured need.
+OceanScope started with one developer and was expected to contain a web client, API,
+ingestion workers, spatial storage, and analytical jobs. Separate repositories or premature
+microservices would have increased release and operational work before measured need. The
+repository now has two developers, but the same modular-monolith decision remains valid.
 
 ## Decision
 

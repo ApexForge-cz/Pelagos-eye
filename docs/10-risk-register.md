@@ -1,6 +1,9 @@
 # Risk Register
 
-Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is the repository maintainer. Review at every phase gate and after source, architecture, or deployment changes.
+Scales: likelihood and impact are `Low`, `Medium`, or `High` (`Critical` is retained for
+security impact). Developer A is accountable for product/architecture/release risks;
+Developer B is accountable for assigned data/platform controls. Review at every phase gate
+and after source, architecture, team, or deployment changes.
 
 | ID | Risk | Likelihood | Impact | Early indicator | Mitigation | Contingency |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +26,7 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
 | R-17 | PostGIS queries become slow | Medium | High | p95/plan regression | spatial/time indexes, bounded queries, partitioning, EXPLAIN baselines, aggregates | cancel/limit query; serve precomputed lower-resolution result |
 | R-18 | Mobile layout becomes unusable | Medium | Medium | clipped panels/controls | progressive disclosure, device testing, simplified mobile modes | limit advanced workflow with clear desktop recommendation |
 | R-19 | GitHub secret leakage | Medium | Critical | scanner alert or exposed key | `.gitignore`, server-only settings, push protection, secret scan, review | revoke/rotate immediately; incident review and history remediation |
-| R-20 | Deployment cost exceeds solo budget | Medium | High | forecast/actual cost threshold | cost ceiling, retention plan, sleep/scale-to-zero where safe, budget alerts | reduce retention/features; take public demo offline safely |
+| R-20 | Deployment cost exceeds project budget | Medium | High | forecast/actual cost threshold | cost ceiling, retention plan, sleep/scale-to-zero where safe, budget alerts | reduce retention/features; take public demo offline safely |
 | R-21 | MarineCadastre mistaken for global history | Medium | High | global labels or comparisons | explicit U.S.-water coverage in contracts/UI/docs | block global view; correct published claims/results |
 | R-22 | AccessAIS ordering unavailable | High | Medium | official outage notice | use official bulk archives/manifests as primary ingestion path | postpone affected region/year; never scrape around controls |
 | R-23 | Provider schema drift | Medium | High | contract fixture failure, unknown envelope | versioned adapters, drift monitoring, reject/quarantine breaking records | freeze last compatible source version; disable ingestion |
@@ -31,11 +34,18 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
 | R-25 | Anomaly false positives harm credibility | High | High | reviewer rejection/alert overload | explainable rules, quality-aware suppression, calibration, neutral language | disable rule; retract/recompute affected indicators |
 | R-26 | Earthquake updates/retractions create inconsistency | Medium | Medium | provider `updated` changes | upsert by source ID/version, keep revision metadata | mark prior result superseded and recompute context |
 | R-27 | Open-Meteo coastal/model values misused | Medium | High | users infer navigation precision | model/resolution/valid-time warning and attribution | disable sensitive presentation; clarify limitations |
-| R-28 | One developer becomes bottleneck | High | High | growing WIP, stale docs, failing CI | narrow slices, WIP limit, automation, modular monolith, phase gates | reduce scope; delay advanced phases rather than cut quality |
+| R-28 | Knowledge or ownership bottleneck | Medium | High | growing WIP, stale docs, unavailable owner | explicit ownership, runbooks, small PRs, cross-review, modular monolith | transfer with contract/evidence; reduce scope rather than cut quality |
 | R-29 | Dependency sprawl and upgrades | Medium | Medium | duplicate libraries, large bundle, vulnerabilities | dependency justification, lockfiles, periodic review, adapters | remove/replace dependency; postpone feature |
 | R-30 | Backups or migrations fail | Low | High | restore test failure | automated backups, migration tests, rehearsed restore and rollback | stop release; restore last verified snapshot |
 | R-31 | Generated intelligence invents claims | High | High | uncited/unsupported output | delay to Phase 8, structured evidence, citations, evals, narrow use cases | disable intelligence feature; retain deterministic views |
 | R-32 | UI aesthetics obscure uncertainty | Medium | High | status/attribution missed in usability test | evidence-first design review, restrained motion/glow, state matrix | simplify visuals; block release of misleading component |
+| R-33 | Merge conflicts delay delivery | Medium | Medium | both developers edit shared files or migrations | path ownership, short branches, small PRs, serialized migrations | stop and rebase the smaller PR; split shared change |
+| R-34 | Frontend/backend contract drift | Medium | High | fixture and API response differ | contract-first PR, typed schemas, contract tests, versioned changes | block integration and restore last agreed contract |
+| R-35 | Duplicate implementation | Medium | Medium | parallel modules solve the same use case | issue owner, Existing Ownership Wins, architecture review | keep validated owner module; remove duplicate in focused PR |
+| R-36 | New developer onboarding gap | Medium | Medium | repeated environment or domain misunderstandings | module map, runbook, starter issue, paired contract review | narrow scope and pair on first provider/platform slice |
+| R-37 | Codex modifies unrelated files | Medium | High | broad diff or owner-boundary breach | AGENTS rules, allowed/forbidden paths, status/diff review | stop work; isolate intended patch without reverting user changes |
+| R-38 | Concurrent migration conflict | Medium | High | multiple Alembic heads | one migration author at a time; A creates/reviews final migration | serialize PRs and reconcile with a reviewed merge migration only if needed |
+| R-39 | No coverage presented as zero | High | High | empty map/KPI without coverage state | `NO COVERAGE` contract, coverage metadata, UI and test matrix | suppress metric; show coverage reason and source state |
 
 ## Top risks before Phase 1
 
@@ -94,9 +104,9 @@ Scales: likelihood and impact are `Low`, `Medium`, or `High`. Initial owner is t
 - R-23 has schema/version checks, bounded downloads, typed adapters, rejection and quality
   reporting, and source-version pinning. A breaking provider response fails the run rather
   than entering production storage silently.
-- R-18 retains one verification gap: automated component, responsive-style, TypeScript,
-  and production-build checks pass, but a supported-browser visual review must be recorded
-  before the Phase 2 gate closes.
+- R-18 retains one non-blocking follow-up: automated component, responsive-style,
+  TypeScript, production-build, Compose, and HTTP checks passed, but a supported-browser
+  manual responsive visual review remains outstanding after the Phase 2 gate.
 
 ## Review protocol
 

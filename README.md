@@ -15,7 +15,10 @@ Build a credible open-source maritime intelligence portfolio project that combin
 
 Maritime information is fragmented across streaming AIS, large historical archives, port reference datasets, model-based ocean forecasts, and hazard feeds. OceanScope plans to normalize those sources behind a consistent provenance model and expose them through focused operational and analytical workflows.
 
-The project is intentionally designed for one developer: a modular monolith, replaceable external-data providers, background workers where justified, and one primary spatial database instead of a premature microservice estate.
+The project started with Developer A as its sole author and is now developed by two people.
+It remains a modular monolith with replaceable external-data providers, independently
+runnable workers only where justified, and one primary spatial database instead of a
+premature microservice estate.
 
 ## Planned Features
 
@@ -39,6 +42,9 @@ The project is intentionally designed for one developer: a modular monolith, rep
 | Bounded UN/LOCODE port query API                      | Implemented, local    |
 | Source catalog and system status APIs                  | Implemented, internal |
 | Real-data source status web UI                         | Implemented, local    |
+| Data Explorer and coordinate/region query UI           | Planned, Phase 2 follow-up |
+| Region Workspace and shared spatiotemporal context     | Planned, Phase 3      |
+| Source Lens and Data Confidence Layer                  | Planned, Phase 3+     |
 | Assisted maritime situation analysis                  | Planned, later phase |
 
 ## Architecture Preview
@@ -63,6 +69,10 @@ The planned deployment unit is a modular monolith plus independently runnable wo
 
 ## Technology Stack
 
+The installed Phase 2 frontend runtime is React, TypeScript, and Vite. CesiumJS, MapLibre,
+deck.gl, ECharts, Tailwind, shadcn/ui, Framer Motion, Zustand, and TanStack Query are target
+choices for authorized later phases and are not installed merely because they appear below.
+
 - Frontend: React, TypeScript, Vite, Tailwind CSS, shadcn/ui, Lucide, Framer Motion
 - State and data: Zustand, TanStack Query
 - Visualization: CesiumJS, MapLibre GL JS, deck.gl, Apache ECharts
@@ -73,6 +83,43 @@ The planned deployment unit is a modular monolith plus independently runnable wo
 - Delivery: Docker, Docker Compose, GitHub Actions
 
 Foundation choices are recorded in accepted Architecture Decision Records. Later-phase GIS, provider, analytical, and deployment choices remain planned until their evidence and phase gates exist.
+
+## 3D Vision
+
+Phase 3 plans an **Oceanic Spatial Intelligence Command Center**: a map-first desktop
+workspace with a central Cesium globe or MapLibre analytical map occupying roughly 55%-65%
+of the viewport, a context-sensitive left rail, a selection-driven intelligence rail, a
+top command bar, and a restrained bottom module dock. It will borrow the useful spatial
+ideas of cinematic globe-to-region transitions, layered HUD information, region highlight,
+and route context without copying aviation terminology, assets, or decorative telemetry.
+
+Visual depth, camera, lighting, motion, and real data density should create impact. Constant
+flashing, excessive neon, ornamental scan lines, invented KPIs, and effects that obscure
+source, coverage, time, or uncertainty are prohibited.
+
+## Innovation Roadmap
+
+Innovation follows data reliability rather than feature count: Region Workspace,
+Spatiotemporal Lens, Data Confidence Layer, Corridor Intelligence, Source Lens, Compare
+Mode, Environmental Context, Explainable Anomaly, Evidence-based Intelligence, and only
+then Natural Language Spatial Query research. No derived percentage, activity score, or AI
+summary may invent its numerical evidence.
+
+## Two-Developer Collaboration
+
+Developer A remains Project Lead and Full-Stack GIS Engineer with approximately 65%-70% of
+the planned workload: product and system architecture, core React/TypeScript, UI/UX, GIS,
+3D, spatial interaction, core API contracts and analytics, integration, demo, and release.
+Developer B is Data & Platform Engineer with approximately 30%-35%: new providers,
+ingestion, validation, normalization, provenance, data quality, PostGIS/Redis operations,
+workers, infrastructure, backend data services, provider/backend tests, and performance
+pipelines.
+
+Existing Ownership Wins: stable modules remain with their current owner. New work follows
+the ownership map; shared contracts, migrations, root configuration, README, AGENTS, and
+GitHub files use focused pull requests and review. The team uses short-lived functional
+branches, contract-first integration, one migration author at a time, and no direct push to
+`main`.
 
 ## Real Data Sources
 
@@ -154,6 +201,11 @@ uv run --directory apps/api oceanscope-export-manifest --ingestion-run-id <uuid>
 ## Documentation
 
 The `docs/` directory contains the project charter, product requirements, architecture, source verification, governance, design system, roadmap, testing and security plans, GitHub strategy, risk register, Codex skill specifications, project-wide completion criteria, ADRs, phase verification records, and the direct dependency inventory.
+
+The audited V2.1 master plan is
+[`docs/OceanScope_Project_Plan_v2.1.md`](docs/OceanScope_Project_Plan_v2.1.md). Its rendered
+PDF is generated at `output/pdf/OceanScope_Project_Plan_v2.1.pdf`; the root Chinese-named
+PDF is synchronized for compatibility with the original repository artifact.
 
 ## License
 

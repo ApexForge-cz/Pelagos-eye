@@ -2,7 +2,12 @@
 
 ## Purpose
 
-“Done” means the requested behavior is implemented, verified, documented, secure enough for its exposure, traceable to real data, and operable by one maintainer. It does not mean “code written” or “looks correct locally.”
+“Done” means the requested behavior is implemented, verified, documented, secure enough for its exposure, traceable to real data, and operable by either member of the two-developer team. It does not mean “code written” or “looks correct locally.”
+
+For README and roadmap status, a feature is `Implemented` only when real data, backend,
+frontend, error states, source display, tests, and documentation form one verified user
+slice. Backend-only work is `Backend Ready`; UI-only work is `Prototype`; fixture-driven
+work is `Development Only`; unbuilt work is `Planned` or `Research`.
 
 ## Universal task checklist
 
@@ -84,13 +89,13 @@
 - Known limitations and deferred work are explicit.
 - The maintainer approves moving to the next phase.
 
-## Phase 0 specific Done
+## Phase 0 historical gate
 
 - All requested planning files exist.
-- README states `🚧 Pre-development / Planning` and uses `Planned` for unfinished capabilities.
+- At the original Phase 0 gate, README used a planning status and marked unfinished
+  capabilities as planned. Current README must instead reflect the latest verified phase.
 - Official source research corrects scope and avoids invented endpoints.
 - Each Phase 0–10 has objective, tasks, technical work, expected files/modules, dependencies, risks, acceptance criteria, and definition of done.
 - `AGENTS.md` contains the permanent engineering rules.
 - `.env.example` contains names/comments only and no values.
 - No application code, page, API, database, dependency installation, or bulk boilerplate was created.
-

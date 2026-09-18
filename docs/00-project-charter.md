@@ -6,9 +6,9 @@
 - Subtitle: **Global Maritime Situational Awareness & Analytics Platform**
 - Chinese name: **全球港航态势感知与智能分析平台**
 - Repository: `ApexForge-cz/Pelagos-eye`
-- Stage: Phase 1 — Engineering Foundation
-- Team: one developer
-- Planning baseline: 2026-09-16
+- Stage: Phase 0-2 complete; Phase 3 requires explicit owner approval
+- Team: two developers using ownership-based parallel delivery
+- Planning baseline: 2026-09-16; V2.1 retrospective: 2026-09-18
 
 ## Vision
 
@@ -34,7 +34,8 @@ OceanScope is not initially targeted at vessel operators, coast guards, emergenc
 2. A replaceable provider architecture for live, historical, port, environmental, and hazard sources.
 3. Reproducible historical analyses with consistent spatial and temporal rules.
 4. Clearly bounded anomaly indicators that describe observations without claiming intent or causality.
-5. A maintainable public repository that one developer can operate and explain.
+5. A maintainable public repository that either developer can operate and explain while
+   preserving explicit module ownership.
 
 ## Scope
 
@@ -83,7 +84,8 @@ Targets are planning hypotheses and will be baselined with real measurements:
 
 ## Constraints and assumptions
 
-- One developer must be able to run the project locally with documented commands.
+- Both developers must be able to run the project locally with documented commands; the
+  architecture must remain recoverable if either person is temporarily unavailable.
 - External providers can fail, throttle, change schemas, or change terms.
 - Live AIS completeness varies by receiver coverage and upstream conditions.
 - MarineCadastre provides U.S. historical coverage and cannot substantiate a global-history claim.
@@ -101,3 +103,8 @@ Phase 0 is complete when all requested planning documents exist, official data-s
 **Gate result (2026-09-17): Complete.** The repository owner explicitly approved starting
 Phases 0 and 1 and provided the public `ApexForge-cz/Pelagos-eye` repository. Its existing
 MIT license is recorded in ADR-0005.
+
+**V2.1 retrospective (2026-09-18): Complete.** The project started with Developer A as the
+sole developer. Developer B joined after Developer A completed Phase 0, Phase 1, and the
+majority of Phase 2. Future planning uses a 65%-70% Developer A and 30%-35% Developer B
+allocation to reduce handoff cost and Git conflicts; it does not rewrite project history.

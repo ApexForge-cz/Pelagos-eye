@@ -79,6 +79,10 @@ class PortSearchQuery:
     text: str | None = None
     country_code: str | None = None
     has_coordinates: bool | None = None
+    min_longitude: float | None = None
+    min_latitude: float | None = None
+    max_longitude: float | None = None
+    max_latitude: float | None = None
     limit: int = 50
     offset: int = 0
 

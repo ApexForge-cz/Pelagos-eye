@@ -4,8 +4,9 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from geoalchemy2 import Geometry
 from geoalchemy2.elements import WKTElement
-from sqlalchemy import Select, delete, func, or_, select
+from sqlalchemy import Select, cast, delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from oceanscope_api.ports.contracts import (
@@ -127,6 +128,20 @@ class SqlAlchemyPortRepository:
             conditions.append(PortSourceRecord.location.is_not(None))
         elif query.has_coordinates is False:
             conditions.append(PortSourceRecord.location.is_(None))
+        if query.min_longitude is not None:
+            envelope = func.ST_MakeEnvelope(
+                query.min_longitude,
+                query.min_latitude,
+                query.max_longitude,
+                query.max_latitude,
+                4326,
+            )
+            conditions.append(
+                func.ST_Intersects(
+                    cast(PortSourceRecord.location, Geometry(geometry_type="POINT", srid=4326)),
+                    envelope,
+                )
+            )
 
         base = (
             select(PortSourceRecord)

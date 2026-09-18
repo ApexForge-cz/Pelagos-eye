@@ -11,10 +11,11 @@ map/data interaction. OceanScope must not copy aviation names, data, icons, asse
 Impact comes from depth, camera, lighting, motion, and truthful data density rather than
 permanent glow, scan lines, flashing, or fabricated telemetry.
 
-Phase 2 has passed its Real Data Foundation gate, but the current frontend remains a minimal
-source/status surface. Command Center, map layers, Data Explorer, `NO COVERAGE`, and
-`MODEL DATA` presentation are planned follow-up work and must not be described as currently
-implemented.
+Phase 2 has passed its Real Data Foundation gate. The Phase 3 Command Center now has an
+accepted bounded 2D spatial slice with real port, earthquake, and stored marine-forecast
+inspection. The authorized second increment adds a focused Three.js overview globe while
+preserving MapLibre as the lower-capability and precision 2D path. Data Explorer and later
+phase vessel, history, risk, and analytical surfaces remain planned.
 
 ## Design principles
 

@@ -108,6 +108,26 @@ and after source, architecture, team, or deployment changes.
   TypeScript, production-build, Compose, and HTTP checks passed, but a supported-browser
   manual responsive visual review remains outstanding after the Phase 2 gate.
 
+## Phase 3 first spatial slice review - 2026-09-18
+
+- R-07 is bounded by a 100-record API cap per rendered layer. The accepted slice uses
+  MapLibre DOM markers for this low-volume path after headless Edge exposed a GeoJSON-worker
+  stall; deck.gl and high-volume rendering remain outside the slice and require profiling.
+- R-08 has a tested lower-capability path: external OpenStreetMap tiles are probed with a
+  short timeout and cannot block viewport or real-data rendering. Failure displays
+  `BASEMAP OFFLINE · WGS 84` over a local coordinate grid.
+- The second Phase 3 increment addresses R-07/R-08 with a lazy Three.js chunk, a WebGL2
+  capability gate, desktop 3D/mobile 2D defaults, an explicit 3D/2D control, and automatic
+  fallback to the accepted MapLibre path. Reference-browser canvas screenshots and pixel
+  variance checks are recorded in `docs/29-phase-3-globe-verification.md`; cross-browser
+  GPU coverage remains open.
+- R-18 was inspected at 1440x900 and 390x844 in Playwright-driven Microsoft Edge. The
+  mobile module dock was moved into document flow after the first inspection found it
+  obscuring layer controls; the repeated screenshots show no remaining overlap or clipping.
+- R-39 now has automated `NO COVERAGE` coverage for an empty exact-coordinate marine
+  forecast. Provider failure remains `DATA UNAVAILABLE`, and viewport totals distinguish
+  records loaded from records matched.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

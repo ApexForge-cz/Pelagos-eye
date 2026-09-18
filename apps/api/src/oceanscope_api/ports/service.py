@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from oceanscope_api.core.errors import SourceDataUnavailableError
+from oceanscope_api.core.errors import InvalidQueryError, SourceDataUnavailableError
 from oceanscope_api.ports.artifacts import LocalArtifactStore
 from oceanscope_api.ports.contracts import (
     PortDataError,
@@ -52,12 +52,38 @@ class PortSearchService:
         self._source_availability = source_availability
 
     def search(self, query: PortSearchQuery) -> PortSearchResult:
+        bounds = (
+            query.min_longitude,
+            query.min_latitude,
+            query.max_longitude,
+            query.max_latitude,
+        )
+        if any(value is not None for value in bounds) and not all(
+            value is not None for value in bounds
+        ):
+            raise InvalidQueryError("all four viewport bounds must be provided together")
+        if all(value is not None for value in bounds):
+            min_longitude, min_latitude, max_longitude, max_latitude = bounds
+            assert min_longitude is not None
+            assert min_latitude is not None
+            assert max_longitude is not None
+            assert max_latitude is not None
+            if min_longitude >= max_longitude:
+                raise InvalidQueryError(
+                    "min_longitude must be less than max_longitude; split antimeridian views"
+                )
+            if min_latitude >= max_latitude:
+                raise InvalidQueryError("min_latitude must be less than max_latitude")
         normalized = PortSearchQuery(
             text=query.text.strip() if query.text is not None else None,
             country_code=(
                 query.country_code.strip().upper() if query.country_code is not None else None
             ),
             has_coordinates=query.has_coordinates,
+            min_longitude=query.min_longitude,
+            min_latitude=query.min_latitude,
+            max_longitude=query.max_longitude,
+            max_latitude=query.max_latitude,
             limit=query.limit,
             offset=query.offset,
         )

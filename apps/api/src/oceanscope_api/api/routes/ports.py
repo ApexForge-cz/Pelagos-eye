@@ -77,6 +77,10 @@ def search_ports(
     q: Annotated[str | None, Query(min_length=2, max_length=100)] = None,
     country_code: Annotated[str | None, Query(min_length=2, max_length=2)] = None,
     has_coordinates: bool | None = None,
+    min_longitude: Annotated[float | None, Query(ge=-180, le=180)] = None,
+    min_latitude: Annotated[float | None, Query(ge=-90, le=90)] = None,
+    max_longitude: Annotated[float | None, Query(ge=-180, le=180)] = None,
+    max_latitude: Annotated[float | None, Query(ge=-90, le=90)] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0, le=100_000)] = 0,
 ) -> PortSearchResponse:
@@ -86,6 +90,10 @@ def search_ports(
             text=q,
             country_code=country_code,
             has_coordinates=has_coordinates,
+            min_longitude=min_longitude,
+            min_latitude=min_latitude,
+            max_longitude=max_longitude,
+            max_latitude=max_latitude,
             limit=limit,
             offset=offset,
         )

@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 
 from oceanscope_api.api.routes.ports import search_ports
-from oceanscope_api.core.errors import SourceDataUnavailableError
+from oceanscope_api.core.errors import InvalidQueryError, SourceDataUnavailableError
 from oceanscope_api.main import app
 from oceanscope_api.ports.contracts import (
     PortSearchQuery,
@@ -33,6 +33,10 @@ def test_search_service_normalizes_user_filters() -> None:
             text="  test data port  ",
             country_code=" ts ",
             has_coordinates=True,
+            min_longitude=100,
+            min_latitude=10,
+            max_longitude=130,
+            max_latitude=40,
             limit=25,
             offset=50,
         )
@@ -42,9 +46,48 @@ def test_search_service_normalizes_user_filters() -> None:
         text="test data port",
         country_code="TS",
         has_coordinates=True,
+        min_longitude=100,
+        min_latitude=10,
+        max_longitude=130,
+        max_latitude=40,
         limit=25,
         offset=50,
     )
+
+
+@pytest.mark.parametrize(
+    "search_query, message",
+    [
+        (PortSearchQuery(min_longitude=100), "all four"),
+        (
+            PortSearchQuery(
+                min_longitude=130,
+                min_latitude=10,
+                max_longitude=100,
+                max_latitude=40,
+            ),
+            "antimeridian",
+        ),
+        (
+            PortSearchQuery(
+                min_longitude=100,
+                min_latitude=40,
+                max_longitude=130,
+                max_latitude=10,
+            ),
+            "min_latitude",
+        ),
+    ],
+)
+def test_search_service_rejects_invalid_viewport_bounds(
+    search_query: PortSearchQuery, message: str
+) -> None:
+    class EmptyRepository:
+        def search(self, query: PortSearchQuery) -> PortSearchResult:
+            return PortSearchResult(records=(), total=0)
+
+    with pytest.raises(InvalidQueryError, match=message):
+        PortSearchService(EmptyRepository()).search(search_query)
 
 
 def test_search_service_rejects_expired_source_data() -> None:
@@ -90,6 +133,10 @@ class StubPortSearchService(PortSearchService):
             text="TEST DATA",
             country_code="ts",
             has_coordinates=True,
+            min_longitude=100,
+            min_latitude=10,
+            max_longitude=130,
+            max_latitude=40,
             limit=10,
             offset=20,
         )
@@ -133,6 +180,10 @@ def test_port_search_endpoint_exposes_bounded_records_and_provenance() -> None:
         q="TEST DATA",
         country_code="ts",
         has_coordinates=True,
+        min_longitude=100,
+        min_latitude=10,
+        max_longitude=130,
+        max_latitude=40,
         limit=10,
         offset=20,
     )
@@ -157,3 +208,5 @@ def test_port_search_endpoint_rejects_unbounded_page_size() -> None:
 
     assert parameters["limit"]["schema"]["maximum"] == 100
     assert parameters["offset"]["schema"]["maximum"] == 100_000
+    for name in ("min_longitude", "min_latitude", "max_longitude", "max_latitude"):
+        assert parameters[name]["required"] is False

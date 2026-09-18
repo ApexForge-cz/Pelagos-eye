@@ -28,4 +28,4 @@ services and additional workers require measured durability, performance, or cos
 ## Alternatives considered
 
 - Installing PostgreSQL and Redis directly on every host: rejected as the documented path.
-- Kubernetes: rejected as unjustified for a single-developer first release.
+- Kubernetes: rejected as unjustified for the project's original single-developer first-release scope.

@@ -202,6 +202,11 @@ dd {
   gap: 1rem;
 }
 
+.source-card-header > div,
+.source-facts > div {
+  min-width: 0;
+}
+
 .source-card h3 {
   margin: 0;
   font-size: 1.08rem;
@@ -275,6 +280,11 @@ dd {
   font-size: 0.86rem;
   font-variant-numeric: tabular-nums;
   line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.source-facts > div:first-child {
+  grid-column: 1 / -1;
 }
 
 .quality-block {
@@ -320,6 +330,7 @@ dd {
 
 .source-links {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-top: auto;
 }

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
+from uuid import UUID
 
 from oceanscope_api.provenance.models import PublicationStatus, RedistributionStatus
 
@@ -71,6 +72,54 @@ class PortDatasetParser(Protocol):
     normalization_version: str
 
     def parse(self, dataset: FetchedPortDataset) -> PortParseResult: ...
+
+
+@dataclass(frozen=True)
+class PortSearchQuery:
+    text: str | None = None
+    country_code: str | None = None
+    has_coordinates: bool | None = None
+    limit: int = 50
+    offset: int = 0
+
+
+@dataclass(frozen=True)
+class PortSearchRecord:
+    id: UUID
+    source_record_id: str
+    record_type: Literal["unlocode", "wpi"]
+    name: str
+    country_code: str
+    un_locode: str | None
+    longitude: float | None
+    latitude: float | None
+    coordinate_accuracy: str | None
+    function_code: str | None
+    source_status: str | None
+    source_updated_value: str | None
+    quality_flags: tuple[str, ...]
+    normalized_at: datetime
+    source_slug: str
+    source_display_name: str
+    source_url: str
+    attribution_text: str
+    data_version: str
+    schema_version: str
+    published_at: datetime | None
+    retrieved_at: datetime
+    ingested_at: datetime
+    source_state: Literal["LIVE", "CACHED", "DELAYED", "OFFLINE"]
+    cache_age_seconds: int | None
+
+
+@dataclass(frozen=True)
+class PortSearchResult:
+    records: tuple[PortSearchRecord, ...]
+    total: int
+
+
+class PortSearchRepository(Protocol):
+    def search(self, query: PortSearchQuery) -> PortSearchResult: ...
 
 
 class PortDataError(RuntimeError):

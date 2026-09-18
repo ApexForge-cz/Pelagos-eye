@@ -2,7 +2,7 @@
 
 - Verification date: 2026-09-17
 - Official feed: `all_hour.geojson`
-- Scope: internal ingestion and provenance metadata; no public event API or warning use
+- Scope: ingestion, provenance metadata, and bounded read-only event query
 
 ## Real-feed evidence
 
@@ -32,8 +32,15 @@ Tests cover valid parsing, coordinate rejection without zero-fill, generated/che
 versioning, idempotent same-feed reuse, newer event revision update, a single event row
 after revision, and PostGIS SRID 4326.
 
+## Query boundary added
+
+`GET /earthquakes` now exposes stored, normalized events through required time and spatial
+bounds, optional minimum magnitude, and bounded pagination. It includes source/version
+provenance and an explicit warning that `tsunami` is USGS metadata rather than an impact
+prediction. Raw provider features and artifact paths remain internal.
+
 ## Remaining boundary
 
-The current slice does not schedule polling, serve cached events, expose an event API,
-process explicit deletions/retractions, calculate maritime proximity, or issue tsunami or
-emergency claims. Those require separate policy, tests, and user-facing warnings.
+The current slice does not schedule polling, serve cached events, process explicit
+deletions/retractions, calculate maritime proximity, or issue tsunami or emergency claims.
+Those require separate policy, tests, and user-facing warnings.

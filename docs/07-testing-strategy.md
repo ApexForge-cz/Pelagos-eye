@@ -2,7 +2,9 @@
 
 ## Goals
 
-Testing must protect data truth, spatial/temporal correctness, provider resilience, and core user workflows. The suite should be layered so one developer can get fast feedback locally and deeper assurance in CI/release jobs.
+Testing must protect data truth, spatial/temporal correctness, provider resilience, and
+core user workflows. The suite should be layered so either developer can get fast feedback
+locally while shared CI/release jobs provide deeper assurance.
 
 ## Test pyramid
 
@@ -102,4 +104,3 @@ No test is silently skipped in a required lane. Conditional tests report why the
 ## Defect handling
 
 Every production data-integrity defect receives a regression test and assessment of affected derived outputs. Corrected results get a new data/algorithm version; old published results are marked superseded rather than invisibly rewritten where reproducibility matters.
-

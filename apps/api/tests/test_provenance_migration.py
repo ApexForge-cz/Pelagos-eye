@@ -2,9 +2,9 @@ import csv
 import hashlib
 import io
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 import zstandard
@@ -16,9 +16,10 @@ from sqlalchemy.orm import Session
 
 from alembic import command
 from oceanscope_api.earthquakes.artifacts import EarthquakeArtifactStore
-from oceanscope_api.earthquakes.contracts import FetchedEarthquakeFeed
+from oceanscope_api.earthquakes.contracts import EarthquakeSearchQuery, FetchedEarthquakeFeed
 from oceanscope_api.earthquakes.parser import UsgsEarthquakeParser
 from oceanscope_api.earthquakes.provider import USGS_SOURCE
+from oceanscope_api.earthquakes.repository import SqlAlchemyEarthquakeRepository
 from oceanscope_api.earthquakes.service import EarthquakeImportService
 from oceanscope_api.history.artifacts import HistoricalAisArtifactStore
 from oceanscope_api.history.contracts import FetchedHistoricalAisArchive, HistoricalAisRequest
@@ -26,14 +27,28 @@ from oceanscope_api.history.parser import MarineCadastreCsvParser
 from oceanscope_api.history.provider import MARINE_CADASTRE_SOURCE
 from oceanscope_api.history.service import HistoricalAisImportService
 from oceanscope_api.ocean.artifacts import MarineForecastArtifactStore
-from oceanscope_api.ocean.contracts import FetchedMarineForecast, MarineForecastRequest
+from oceanscope_api.ocean.contracts import (
+    FetchedMarineForecast,
+    MarineForecastQuery,
+    MarineForecastRequest,
+)
 from oceanscope_api.ocean.parser import OpenMeteoMarineParser
 from oceanscope_api.ocean.provider import OPEN_METEO_MARINE_SOURCE
+from oceanscope_api.ocean.repository import SqlAlchemyMarineForecastRepository
 from oceanscope_api.ocean.service import MarineForecastImportService
 from oceanscope_api.ports.artifacts import LocalArtifactStore
-from oceanscope_api.ports.contracts import FetchedPortDataset, SourceDescriptor
+from oceanscope_api.ports.contracts import (
+    FetchedPortDataset,
+    PortSearchQuery,
+    SourceDescriptor,
+)
 from oceanscope_api.ports.parsers import WorldPortIndexParser
+from oceanscope_api.ports.repository import SqlAlchemyPortRepository
 from oceanscope_api.ports.service import PortImportService
+from oceanscope_api.provenance.manifest import (
+    IngestionManifestService,
+    SqlAlchemyIngestionManifestRepository,
+)
 from oceanscope_api.provenance.models import RedistributionStatus
 
 TEST_DATABASE_URL = os.getenv("OCEANSCOPE_TEST_DATABASE_URL")
@@ -146,7 +161,9 @@ class _TestPortProvider:
         terms_reviewed_at=datetime(2026, 9, 17, tzinfo=UTC),
     )
 
-    def __init__(self) -> None:
+    def __init__(self, source: SourceDescriptor | None = None) -> None:
+        if source is not None:
+            self.source = source
         self._content = (
             "portNumber,portName,countryCode,latitude,longitude,unloCode\n"
             '1,TEST DATA Port,TS,"12°34\'00""N","045°30\'00""E",TS TST\n'
@@ -169,6 +186,18 @@ class _TestPortProvider:
 
 def _assert_port_import_is_spatial_and_idempotent(engine: Engine, tmp_path: Path) -> None:
     provider = _TestPortProvider()
+    unreviewed_provider = _TestPortProvider(
+        SourceDescriptor(
+            slug="test-unreviewed-port-import",
+            display_name="TEST DATA Unreviewed Port Import",
+            official_url="https://example.test/unreviewed-ports",
+            terms_url=None,
+            attribution_text="TEST DATA unreviewed attribution",
+            license_identifier=None,
+            redistribution_status=RedistributionStatus.UNREVIEWED,
+            terms_reviewed_at=None,
+        )
+    )
     with Session(engine) as session:
         service = PortImportService(
             session,
@@ -177,16 +206,20 @@ def _assert_port_import_is_spatial_and_idempotent(engine: Engine, tmp_path: Path
         )
         first = service.import_dataset(provider, WorldPortIndexParser())
         second = service.import_dataset(provider, WorldPortIndexParser())
+        service.import_dataset(unreviewed_provider, WorldPortIndexParser())
+        public_result = SqlAlchemyPortRepository(session).search(PortSearchQuery(limit=10))
 
     assert first.status == "succeeded"
     assert first.records_accepted == 1
     assert second.ingestion_run_id == first.ingestion_run_id
+    assert public_result.total == 1
+    assert public_result.records[0].source_slug == "test-port-import"
 
     with engine.connect() as connection:
         count, srid = connection.execute(
             text("SELECT count(*), min(ST_SRID(location::geometry)) FROM port_source_record")
         ).one()
-    assert count == 1
+    assert count == 2
     assert srid == 4326
 
 
@@ -248,11 +281,27 @@ def _assert_earthquake_import_is_spatial_and_idempotent(engine: Engine, tmp_path
         provider._generated += 60_000
         provider._updated += 60_000
         revised = service.import_feed(provider, UsgsEarthquakeParser())
+        event_time = datetime.fromtimestamp(1_789_631_900, tz=UTC)
+        public_result = SqlAlchemyEarthquakeRepository(session).search(
+            EarthquakeSearchQuery(
+                start_at=event_time - timedelta(minutes=1),
+                end_at=event_time + timedelta(minutes=1),
+                min_longitude=120,
+                min_latitude=30,
+                max_longitude=121,
+                max_latitude=31,
+                min_magnitude=2,
+                limit=10,
+            )
+        )
 
     assert first.status == "succeeded"
     assert first.inserted == 1
     assert second.ingestion_run_id == first.ingestion_run_id
     assert revised.updated == 1
+    assert public_result.total == 1
+    assert public_result.records[0].event_id == "test-event"
+    assert public_result.records[0].source_slug == "usgs-earthquakes"
 
     with engine.connect() as connection:
         count, srid, magnitude = connection.execute(
@@ -321,10 +370,21 @@ def _assert_marine_import_is_spatial_and_idempotent(engine: Engine, tmp_path: Pa
         )
         first = service.import_forecast(_TestMarineProvider(), OpenMeteoMarineParser(), request)
         second = service.import_forecast(_TestMarineProvider(), OpenMeteoMarineParser(), request)
+        public_result = SqlAlchemyMarineForecastRepository(session).query(
+            MarineForecastQuery(
+                latitude=20,
+                longitude=-40,
+                start_at=datetime(2026, 9, 17, 12, tzinfo=UTC),
+                end_at=datetime(2026, 9, 17, 13, tzinfo=UTC),
+            )
+        )
 
     assert first.status == "succeeded"
     assert first.inserted == 1
     assert second.ingestion_run_id == first.ingestion_run_id
+    assert public_result.total == 1
+    assert public_result.records[0].wave_height_m == 1.4
+    assert public_result.records[0].source_slug == "open-meteo-marine"
 
     with engine.connect() as connection:
         count, srid, height = connection.execute(
@@ -424,10 +484,18 @@ def _assert_historical_ais_import_is_spatial_and_idempotent(engine: Engine, tmp_
         )
         first = service.import_archive(provider, MarineCadastreCsvParser(), request)
         second = service.import_archive(provider, MarineCadastreCsvParser(), request)
+        manifest = IngestionManifestService(SqlAlchemyIngestionManifestRepository(session)).export(
+            UUID(first.ingestion_run_id)
+        )
 
     assert first.status == "succeeded"
     assert first.inserted == 1
     assert second.ingestion_run_id == first.ingestion_run_id
+    assert manifest.source.slug == "noaa-marinecadastre-ais"
+    assert manifest.source_version is not None
+    assert manifest.source_version.checksum == provider.fetch(request).checksum_sha256
+    assert manifest.ingestion_run.parameters["bounds"] == [-91, 28, -89, 30]
+    assert manifest.ingestion_run.code_revision == "TEST-DATA-revision"
 
     with engine.connect() as connection:
         count, srid, mmsi = connection.execute(

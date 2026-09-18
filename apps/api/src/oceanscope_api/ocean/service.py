@@ -1,16 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from oceanscope_api.core.errors import InvalidQueryError, SourceDataUnavailableError
 from oceanscope_api.ocean.artifacts import MarineForecastArtifactStore
 from oceanscope_api.ocean.contracts import (
     MarineDataError,
     MarineForecastParser,
     MarineForecastProvider,
+    MarineForecastQuery,
+    MarineForecastQueryRepository,
+    MarineForecastQueryResult,
     MarineForecastRequest,
 )
 from oceanscope_api.ocean.repository import SqlAlchemyMarineForecastRepository
@@ -30,6 +34,7 @@ from oceanscope_api.provenance.service import (
     RegisterSourceVersion,
     StartIngestionRun,
 )
+from oceanscope_api.status.contracts import SourceAvailabilityLookup
 
 
 @dataclass(frozen=True)
@@ -44,6 +49,41 @@ class MarineForecastImportReport:
     inserted: int
     unchanged: int
     artifact_reference: str
+
+
+class MarineForecastQueryService:
+    def __init__(
+        self,
+        repository: MarineForecastQueryRepository,
+        source_availability: SourceAvailabilityLookup | None = None,
+    ) -> None:
+        self._repository = repository
+        self._source_availability = source_availability
+
+    def query(self, query: MarineForecastQuery) -> MarineForecastQueryResult:
+        if query.start_at.tzinfo is None or query.end_at.tzinfo is None:
+            raise InvalidQueryError("start_at and end_at must include UTC offsets")
+        if query.start_at >= query.end_at:
+            raise InvalidQueryError("start_at must be earlier than end_at")
+        if query.end_at - query.start_at > timedelta(days=7):
+            raise InvalidQueryError("the forecast window cannot exceed 7 days")
+        if self._source_availability is None:
+            return self._repository.query(query)
+        availability = self._source_availability.get_source_availability("open-meteo-marine")
+        if availability is None or not availability.has_usable_data:
+            raise SourceDataUnavailableError("Open-Meteo marine data is unavailable")
+        result = self._repository.query(query)
+        return replace(
+            result,
+            records=tuple(
+                replace(
+                    record,
+                    source_state=availability.state,
+                    cache_age_seconds=availability.cache_age_seconds,
+                )
+                for record in result.records
+            ),
+        )
 
 
 class MarineForecastImportService:

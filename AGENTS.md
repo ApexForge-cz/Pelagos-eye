@@ -2,6 +2,12 @@
 
 These rules apply to all work in this repository. Read the relevant planning documents before implementation. The current project status in `README.md` controls which phase is authorized.
 
+OceanScope started as a single-developer project. Developer A remains Project Lead and
+primary owner of product, architecture, frontend, GIS, integration, and release. Developer B
+is Data & Platform Engineer and owns meaningful provider, ingestion, data-platform,
+infrastructure, and backend-test modules. This history and ownership split must not be
+rewritten as an equal 50/50 allocation.
+
 ## Permanent rules
 
 1. Never fabricate production data.
@@ -24,6 +30,16 @@ These rules apply to all work in this repository. Read the relevant planning doc
 18. Every external-data UI must expose freshness information.
 19. Cached data must be labeled.
 20. Never silently fall back to fake values.
+21. Real data comes before impressive numbers or visual decoration.
+22. Existing ownership wins; do not move stable modules merely to make a responsibility table tidy.
+23. Define or update typed contracts before parallel frontend/backend implementation.
+24. Use small, focused pull requests and never push directly to `main`.
+25. Do not modify another owner's module without an issue, agreed scope, and review.
+26. Do not run repository-wide formatting in a feature pull request.
+27. Never commit a secret, raw restricted dataset, database volume, or local cache.
+28. Map and chart visualizations must not distort positions, values, units, uncertainty, or coverage.
+29. Model output must be labeled `MODEL DATA`; derived output must be labeled `DERIVED`.
+30. `NO COVERAGE` is not zero, no vessel, or `DATA UNAVAILABLE`.
 
 ## Data and source rules
 
@@ -34,6 +50,8 @@ These rules apply to all work in this repository. Read the relevant planning doc
 - Reverify official terms, limits, schema, and attribution before integrating or releasing a source.
 - Do not claim global historical AIS coverage from MarineCadastre; its planned use is U.S. waters.
 - Treat AIS identity/static fields and preliminary event data as fallible observations.
+- Production code must not use `Math.random()`, generated records, test fixtures, zeros, or
+  unrelated providers as a fallback for missing external data.
 
 ## Architecture rules
 
@@ -46,7 +64,9 @@ These rules apply to all work in this repository. Read the relevant planning doc
 
 ## UX and claims
 
-- Use the controlled source states `LIVE`, `CACHED`, `DELAYED`, and `OFFLINE`.
+- Use `LIVE`, `CACHED`, `DELAYED`, and `OFFLINE` as source states. Use `NO COVERAGE`,
+  `MODEL DATA`, `DERIVED`, and `TEST DATA` as distinct coverage/content labels; do not mix
+  them into the source-state enum. Always pair color with text.
 - Distinguish empty results from unavailable data.
 - Show units, coverage, effective time, source, and warnings beside the values they qualify.
 - Anomalies are indicators for review, not proof of intent, wrongdoing, collision, or emergency.
@@ -61,3 +81,18 @@ These rules apply to all work in this repository. Read the relevant planning doc
 - Record the commands/checks run and any remaining limitations.
 - Never mark a planned capability completed without acceptance evidence.
 
+## Collaboration and Git discipline
+
+- Developer A primary paths: `apps/web`, UI, GIS/map, visualization, core API contracts,
+  architecture, integration, README/demo/release.
+- Developer B primary paths: providers, ingestion/workers, data pipelines, backend data
+  operations, infrastructure, provider/backend tests, and performance pipelines.
+- Shared paths include contracts, migrations, root configuration, GitHub files, README, and
+  `AGENTS.md`; change them in independent small pull requests where practical.
+- Do not create Alembic migrations concurrently. Developer B may propose a schema change;
+  Developer A creates or reviews the final migration.
+- Use short-lived functional branches such as `ui/*`, `gis/*`, `api/*`, `data/*`, `ais/*`,
+  `history/*`, `risk/*`, `infra/*`, `test/*`, `docs/*`, `contract/*`, and `fix/*`.
+- Before work, read `AGENTS.md`, the current branch/status, issue scope, allowed paths, and
+  forbidden paths. Before handoff, run relevant format, lint, type, test, build,
+  `git diff --check`, and configured secret checks, then report limitations.

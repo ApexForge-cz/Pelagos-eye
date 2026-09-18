@@ -2,9 +2,17 @@
 
 This roadmap is sequential at the gate level, not a promise of dates. Each phase may contain small vertical slices. A later phase starts only after its dependencies and acceptance evidence exist.
 
+Current state on 2026-09-18: Phase 0, Phase 1, and Phase 2 are complete. Phase 3 is the next
+major stage but still requires explicit owner authorization. Developer A remains Project
+Lead + Full-Stack GIS Engineer with about 65%-70% of the forward workload; Developer B is
+Data & Platform Engineer with about 30%-35%. Existing Ownership Wins: stable modules are not
+moved merely to fit the new responsibility table.
+
 ## Phase 0 — Research & Planning
 
-**Objective:** Establish a credible, buildable product scope based on verified sources and single-developer constraints.
+**Status:** Complete; V2.1 retrospective complete. Do not redo.
+
+**Objective:** Establish a credible, buildable product scope based on verified sources and the project's original single-developer constraints.
 
 **Tasks:** Define charter, personas, use cases, non-goals, routes, architecture, source catalog, governance, UI direction, test/security strategy, GitHub plan, risks, skills, and completion gates. Record owner decisions still needed.
 
@@ -21,6 +29,8 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 **Definition of Done:** Documentation review passes, no business code or dependencies were introduced, and the owner approves entry to Phase 1.
 
 ## Phase 1 — Engineering Foundation
+
+**Status:** Complete; continue focused engineering hardening without reinitialization.
 
 **Objective:** Create the smallest professional foundation that supports repeatable development and later real-data slices.
 
@@ -40,6 +50,10 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 
 ## Phase 2 — Real Data Foundation
 
+**Status:** Complete. The gate evidence is recorded in `docs/26-phase-2-gate-verification.md`.
+Data Explorer, manual responsive visual review, `NO COVERAGE`, `MODEL DATA`, and refresh
+scheduling remain explicit follow-up work rather than retroactive gate claims.
+
 **Objective:** Prove end-to-end ingestion, provenance, quality, and source health before rich visualization.
 
 **Tasks:** Implement source catalog and ingestion-run model; integrate one release-based port source, WPI, one bounded MarineCadastre sample/import, Open-Meteo, and USGS; add validation, caching, manifests, quality reports, and `/data`/`/system` APIs.
@@ -57,6 +71,9 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 **Definition of Done:** A reviewer can run a bounded import, inspect quality/provenance, query real data, and reproduce it from a manifest.
 
 ## Phase 3 — Digital Earth
+
+**Status:** Next major stage; not authorized until the owner explicitly starts it. Design
+tokens, UI shell, Cesium proof-of-concept, and map architecture may be prepared separately.
 
 **Objective:** Deliver the map-first spatial shell using real port, marine, and hazard data.
 
@@ -76,6 +93,8 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 
 ## Phase 4 — Live AIS
 
+**Status:** Planned.
+
 **Objective:** Add resilient, backend-mediated live vessel awareness with honest continuity and bounded load.
 
 **Tasks:** Implement AISStream worker, subscription configuration, message normalization, persistence/retention, latest-vessel state, backend WebSocket fan-out, live map layers, vessel search/detail, reconnect behavior, backpressure, and health telemetry.
@@ -93,6 +112,8 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 **Definition of Done:** A measured region can run continuously through planned failure scenarios with documented data loss/continuity semantics and green integration/load tests.
 
 ## Phase 5 — Historical Analytics
+
+**Status:** Planned; only the bounded internal U.S.-water importer exists today.
 
 **Objective:** Provide reproducible U.S.-water historical playback and traffic analyses from MarineCadastre.
 
@@ -112,6 +133,8 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 
 ## Phase 6 — Risk & Anomaly Engine
 
+**Status:** Planned.
+
 **Objective:** Produce explainable rule-based indicators for review without overstating meaning.
 
 **Tasks:** Implement geofences, entry/exit/dwell events, speed and course rules, AIS observation-gap detection, anomaly review states, earthquake proximity context, evidence panels, and rule-version management.
@@ -129,6 +152,8 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 **Definition of Done:** Approved scenarios meet precision/false-positive review targets and all alerts are traceable, explainable, and retractable.
 
 ## Phase 7 — Advanced Visualization
+
+**Status:** Planned.
 
 **Objective:** Improve analytical depth and polish while preserving correctness and performance.
 
@@ -148,6 +173,8 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 
 ## Phase 8 — Intelligence
 
+**Status:** Research/planned after deterministic evidence products.
+
 **Objective:** Add evidence-grounded assisted analysis only after deterministic data products are trustworthy.
 
 **Tasks:** Define safe use cases, retrieval/evidence packaging, citation format, prompt/version governance, evaluation sets, refusal/uncertainty behavior, cost controls, and opt-in UI.
@@ -166,6 +193,8 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 
 ## Phase 9 — QA & Security
 
+**Status:** Planned release-candidate hardening; continuous checks already run earlier.
+
 **Objective:** Harden the complete system against failures, regressions, abuse, and operational mistakes.
 
 **Tasks:** Complete threat model, SAST/dependency/container/secret scans, authorization and rate-limit tests, fuzz/property tests, browser matrix, accessibility audit, load/soak/failure tests, backup/restore, incident and disaster runbooks.
@@ -183,6 +212,8 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 **Definition of Done:** Release candidate evidence is signed off against `docs/12-definition-of-done.md`, with remaining lower risks accepted and recorded.
 
 ## Phase 10 — Production Release
+
+**Status:** Planned.
 
 **Objective:** Publish a secure, truthful, maintainable first production release and repository presentation.
 
@@ -208,3 +239,14 @@ This roadmap is sequential at the gate level, not a promise of dates. Each phase
 - Measure before splitting services or adding infrastructure.
 - Keep Git history free of secrets and bulk external datasets.
 
+## Two-developer phase ownership
+
+| Phase | Developer A lead | Developer B independent ownership |
+| --- | --- | --- |
+| 2 follow-up | Data/System UI, Data Explorer, status components, contracts, map shell preparation | provider review, freshness/cache/health backend, region query, provider/API tests |
+| 3 | Command Center, Cesium/MapLibre, camera, layers, Region Workspace, Source/Confidence UI | BBOX/viewport/PostGIS queries, region summary, provider health, backend tests |
+| 4 | Vessel explorer/layer/detail, search UI, track/LOD/follow, connection UI | AISStream worker, validation/dedup, Redis/PostGIS, WebSocket/backpressure/retention |
+| 5 | History/playback/traffic/corridor/compare UX and chart-map linking | archive pipeline, manifest, partition/track/aggregate/corridor computation |
+| 6 | Risk Center, geofence/evidence/timeline/explanation/environment context UX | deterministic rules, evidence storage, versioning/recompute/calibration support |
+| 7 | about 80%: GPU layers, particles, columns, scenes, tours, interaction and polish | server aggregation, optimized payloads, query/cache performance |
+| 8 | evidence use cases, report/citation/refusal UX, integration and release | structured evidence backend, deterministic query assembly, telemetry/evaluation data |

@@ -28,6 +28,13 @@ export interface SourceVersion {
   retrieved_at: string
 }
 
+export interface Freshness {
+  age_seconds: number | null
+  live_ttl_seconds: number
+  delayed_ttl_seconds: number
+  cache_ttl_seconds: number | null
+}
+
 export interface SourceStatus {
   slug: string
   display_name: string
@@ -39,6 +46,8 @@ export interface SourceStatus {
   state: SourceState
   availability: Availability
   has_usable_data: boolean
+  cache_age_seconds: number | null
+  freshness: Freshness
   latest_run: IngestionRun | null
   latest_usable_run: IngestionRun | null
   latest_version: SourceVersion | null

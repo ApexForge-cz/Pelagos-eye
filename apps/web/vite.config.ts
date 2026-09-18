@@ -6,6 +6,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/data': 'http://127.0.0.1:8000',
+      '/earthquakes': 'http://127.0.0.1:8000',
+      '/ocean': 'http://127.0.0.1:8000',
+      '/ports': 'http://127.0.0.1:8000',
       '/system': 'http://127.0.0.1:8000',
     },
   },

@@ -4,7 +4,8 @@
 - Scope: internal UN/LOCODE and World Port Index download, validation, provenance, and
   PostGIS persistence
 - Environment: Docker Linux API image, PostgreSQL 17 with PostGIS 3.5
-- Public API/UI: not included
+- Public API/UI at this verification slice: not included; later Phase 2 records document
+  `/ports`, the source-status UI, and the completed gate.
 
 ## Official artifacts observed
 
@@ -53,13 +54,11 @@ The automated suite uses only fixtures labeled `TEST DATA`; production imports u
 official network providers. The real artifacts and local database are disposable runtime
 evidence, not test fixtures.
 
-## Remaining Phase 2 work
+## Subsequent Phase 2 status
 
-- Add the planned frontend `/data` and `/system` screens; the read-only backend
-  `/data/sources` and `/system/status` contracts are now implemented.
-- Integrate a bounded MarineCadastre import, Open-Meteo Marine, and USGS earthquakes.
-- Define cache/TTL policy and visible `CACHED`, `DELAYED`, and `OFFLINE` behavior per
-  source.
+- The minimal source/system status UI, bounded MarineCadastre import, Open-Meteo import and
+  query, USGS import and query, and tested source-specific cache/freshness policy were added
+  in later Phase 2 slices. See `docs/16` through `docs/26`.
 - Complete WPI redistribution review before any public data response or snapshot release.
 - Defer canonical port entity resolution until an explicit matching/evaluation design is
   approved.

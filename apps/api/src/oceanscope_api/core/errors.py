@@ -10,6 +10,14 @@ class DatabaseUnavailableError(RuntimeError):
     """Raised when a database-backed API cannot safely answer a request."""
 
 
+class InvalidQueryError(ValueError):
+    """Raised when query parameters are individually valid but inconsistent together."""
+
+
+class SourceDataUnavailableError(RuntimeError):
+    """Raised when stored source data is outside its approved freshness window."""
+
+
 class ProblemDetail(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -61,6 +69,46 @@ async def database_unavailable_handler(
     )
 
 
+async def invalid_query_handler(request: Request, exc: InvalidQueryError) -> JSONResponse:
+    problem = ProblemDetail(
+        type="https://oceanscope.invalid/problems/invalid-query",
+        title="Invalid query",
+        status=422,
+        detail=str(exc),
+        instance=request.url.path,
+        correlation_id=getattr(request.state, "correlation_id", None),
+    )
+    return JSONResponse(
+        status_code=problem.status,
+        content=problem.model_dump(mode="json", exclude_none=True),
+        media_type="application/problem+json",
+    )
+
+
+async def source_data_unavailable_handler(
+    request: Request,
+    _: SourceDataUnavailableError,
+) -> JSONResponse:
+    problem = ProblemDetail(
+        type="https://oceanscope.invalid/problems/source-data-unavailable",
+        title="Source data unavailable",
+        status=503,
+        detail="The requested source data is outside its approved freshness window.",
+        instance=request.url.path,
+        correlation_id=getattr(request.state, "correlation_id", None),
+    )
+    return JSONResponse(
+        status_code=problem.status,
+        content=problem.model_dump(mode="json", exclude_none=True),
+        media_type="application/problem+json",
+    )
+
+
 def install_exception_handlers(application: FastAPI) -> None:
     application.add_exception_handler(RequestValidationError, validation_error_handler)  # type: ignore[arg-type]
     application.add_exception_handler(DatabaseUnavailableError, database_unavailable_handler)  # type: ignore[arg-type]
+    application.add_exception_handler(InvalidQueryError, invalid_query_handler)  # type: ignore[arg-type]
+    application.add_exception_handler(
+        SourceDataUnavailableError,
+        source_data_unavailable_handler,  # type: ignore[arg-type]
+    )

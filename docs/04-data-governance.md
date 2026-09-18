@@ -99,7 +99,12 @@ Planned controlled flags include `missing_required`, `invalid_coordinate`, `inva
 
 ## Ownership and audit
 
-The single project maintainer is data steward until roles are delegated. Each source has a catalog entry, review date, validation owner, and incident notes. Material transformations receive code review/checklist evidence even in solo development, using pull requests or documented self-review.
+Developer A is accountable for product claims, architecture, public contracts, and release
+decisions. Developer B is primary steward for new providers, ingestion, validation, data
+quality, platform operations, and backend evidence. Existing Ownership Wins: stable modules
+already implemented by Developer A do not move solely to match the new responsibility table.
+Each source has a catalog entry, review date, validation owner, and incident notes. Material
+transformations require pull-request review or recorded checklist evidence.
 
 ## Governance release gates
 
@@ -109,4 +114,3 @@ The single project maintainer is data steward until roles are delegated. Each so
 - No analytics result without a run manifest.
 - No cache path without an age label and expiry rule.
 - No public release while test/synthetic records can reach production queries.
-

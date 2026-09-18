@@ -4,6 +4,19 @@
 
 OceanScope should feel like a calm, precise maritime command workspace: dark, spatial, information-dense, and credible. It must not resemble a decorative wallboard. The visual system uses depth and restrained motion to organize real information, while timestamps, coverage, and uncertainty stay visible.
 
+The Phase 3 primary surface is the **Oceanic Spatial Intelligence Command Center**. The
+reference video informs only its central 3D Earth, globe-to-region camera movement, spatial
+highlighting, route context, HUD layering, side-rail hierarchy, bottom navigation, and
+map/data interaction. OceanScope must not copy aviation names, data, icons, assets, or copy.
+Impact comes from depth, camera, lighting, motion, and truthful data density rather than
+permanent glow, scan lines, flashing, or fabricated telemetry.
+
+Phase 2 has passed its Real Data Foundation gate. The Phase 3 Command Center now has an
+accepted bounded 2D spatial slice with real port, earthquake, and stored marine-forecast
+inspection. The authorized second increment adds a focused Three.js overview globe while
+preserving MapLibre as the lower-capability and precision 2D path. Data Explorer and later
+phase vessel, history, risk, and analytical surfaces remain planned.
+
 ## Design principles
 
 1. **Map first:** the geospatial workspace owns the largest continuous area; panels support a question rather than frame every edge.
@@ -51,12 +64,18 @@ Never rely on hue alone. Every health state includes a text label and, where use
 
 ### Desktop
 
-- Top command bar: product/location context, time, global search, source health.
-- Left rail: route/layer navigation, collapsible.
-- Central map: primary interaction surface.
-- Right inspector: selected vessel, port, event, or layer details.
-- Bottom timeline/analytics tray: appears only for time-based work.
+- Top command bar: OceanScope, `GLOBAL`/`REGION`/`PORT`/`VESSEL`/`HISTORY`, UTC,
+  data/connection state, performance mode, and command search.
+- Left context rail: changes with the active context rather than repeating one dashboard.
+- Central spatial workspace: primary interaction surface and roughly 55%-65% of desktop.
+- Right intelligence rail: selection-driven evidence, charts, warnings, and provenance.
+- Bottom module dock: Overview, Vessels, Ports, Regions, Environment, Traffic, History,
+  Risk, and Data; icon + label with a restrained active underline.
 - Floating map controls: grouped, keyboard reachable, away from attribution.
+
+Visual layers are L0 space background, L1 Earth/map, L2 spatial data, L3 HUD/information,
+and L4 selection/alert. SceneDirector camera presets are configuration, not duplicated hard
+code. User map input immediately cancels an automated camera transition.
 
 ### Tablet and small screens
 
@@ -109,7 +128,13 @@ Never rely on hue alone. Every health state includes a text label and, where use
 
 ## Data states
 
-Each external-data component supports loading, empty, error, offline, delayed, cached, and live states. Empty means a successful query with no matching records; unavailable means the system could not establish a valid answer. Skeletons must not resemble real values.
+Each external-data component supports loading, empty, and error states plus the controlled
+source states `LIVE`, `CACHED`, `DELAYED`, and `OFFLINE`. `NO COVERAGE`, `MODEL DATA`,
+`DERIVED`, and `TEST DATA` are separate coverage/content labels where applicable; they are
+not source states.
+Empty means a successful covered query with no matching records; `NO COVERAGE` means the
+source does not support the requested space/time; unavailable means no valid answer could be
+established. Skeletons must not resemble real values, and color never replaces text.
 
 ## Accessibility
 
@@ -144,4 +169,3 @@ Each external-data component supports loading, empty, error, offline, delayed, c
 - Essential workflows are keyboard reachable outside inherently spatial camera manipulation, with equivalent controls.
 - Performance mode and reduced motion preserve meaning.
 - Visual review finds no clipped labels, illegible glass, uncontrolled glow, or overlapping attribution.
-

@@ -2,7 +2,7 @@
 
 - Verification date: 2026-09-17
 - Official endpoint: `https://marine-api.open-meteo.com/v1/marine`
-- Scope: internal bounded point-forecast ingestion and provenance; no public forecast API
+- Scope: bounded point-forecast ingestion, provenance, and read-only query API
 
 ## Real-response evidence
 
@@ -38,10 +38,18 @@ changed-unit and truncated-response rejection, duplicate-time isolation, explici
 variable subsets, same-content idempotency, PostGIS SRID 4326, and migration
 downgrade/upgrade.
 
+## Query boundary added
+
+`GET /ocean/forecast` returns the latest stored forecast matching an exact requested
+coordinate and an offset-aware time window of at most seven days. It keeps requested and
+selected grid coordinates distinct, exposes units and provenance, and carries an explicit
+model/coastal/navigation warning. Raw provider documents and artifact paths remain
+internal.
+
 ## Remaining boundary
 
-This slice does not schedule refreshes, expose forecasts publicly, choose a cache by age,
-fall back across models, or provide dense map tiles. Coastal/model uncertainty remains;
+This slice does not schedule refreshes, choose a cache by age, fall back across models, or
+provide dense map tiles. Coastal/model uncertainty remains;
 the data must not be used for navigation, collision avoidance, or emergency decisions.
 The free endpoint is for non-commercial use and requires attribution under the current
 terms reviewed on the verification date.

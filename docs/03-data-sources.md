@@ -102,6 +102,11 @@ Direct official downloads are labeled `LIVE`; a checksummed local archive replay
 labeled `CACHED` with its age.
 No global, live, ownership, or complete-coverage claim is made.
 
+The status policy treats a newly retrieved archive as `LIVE` for one day and then as a
+stored `CACHED` archive. Its cache window has no time expiry because the dated source
+artifact is immutable and checksum-pinned; this does not imply that the upstream service
+is currently reachable or that coverage is complete.
+
 ## 3. UNECE UN/LOCODE
 
 ### Official sources
@@ -136,6 +141,13 @@ The official directory states UN/CEFACT standards are free to use under CC BY 4.
 
 Serve the last validated official release with its edition and `CACHED` state. Do not silently switch to pre-release content.
 
+### Implemented Phase 2 query boundary
+
+`GET /ports` exposes normalized UN/LOCODE rows from the latest usable ingestion run with
+bounded pagination and optional name/code, country, and coordinate-availability filters.
+Responses retain the release, source URL, attribution, timestamps, source state, and
+quality flags. The query does not expose raw rows or infer canonical port identities.
+
 ## 4. NGA World Port Index
 
 ### Official sources
@@ -167,6 +179,9 @@ Retain the stable source key, port/country/region names, coordinates, UN/LOCODE 
 ### Limitations and license
 
 NGA explicitly states WPI does not replace current charts and detailed publications. The 2019 publication states no copyright is claimed under U.S. law; current service metadata requests NGA attribution but has an empty machine-readable license field. Before redistributing a current snapshot, preserve attribution and complete a release-time terms review. Do not market WPI data as navigation-authoritative.
+
+The current public port-query repository filters out WPI because its redistribution status
+remains `unreviewed`. Internal ingestion and status metadata do not override that gate.
 
 ### Fallback
 
@@ -207,8 +222,10 @@ requests GMT, sea-cell selection, and the `best_match` routing mode for seven ex
 supported variables. It stores requested and selected-grid coordinates separately,
 preserves units and UTC valid times, retains a checksummed raw response, and rejects
 misaligned, invalid, or entirely null rows without zero-fill. `best_match` is not treated
-as proof of one underlying model. Public queries, scheduled refresh, and cache fallback
-remain unimplemented.
+as proof of one underlying model. `GET /ocean/forecast` exposes the latest stored snapshot
+matching an exact requested coordinate and a bounded time window of at most seven days. It
+preserves requested/grid coordinates, units, valid times, provenance, and the coastal/model
+warning. Scheduled refresh and cache fallback remain unimplemented.
 
 ### Fallback
 
@@ -233,6 +250,10 @@ Serve a cached forecast only within an explicit age threshold and retain its ori
 - Use the FDSN event API for bounded custom/history queries, not high-frequency recreation of standard feeds.
 - The Phase 2 importer pins each feed generation and content checksum, validates point
   geometry/timestamps, and upserts only when the provider `updated` time advances.
+- `GET /earthquakes` queries stored events only when both an offset-aware time window and
+  a non-antimeridian WGS 84 bounding box are supplied. The time window is capped at 31
+  days, pagination is bounded, and event, update, ingestion, and normalization times stay
+  distinct in the response.
 
 ### Data semantics
 

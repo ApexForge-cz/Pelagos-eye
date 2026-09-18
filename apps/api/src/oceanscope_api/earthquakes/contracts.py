@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
+from uuid import UUID
 
 from oceanscope_api.ports.contracts import SourceDescriptor
 
@@ -64,3 +65,57 @@ class EarthquakeFeedParser(Protocol):
     normalization_version: str
 
     def parse(self, dataset: FetchedEarthquakeFeed) -> EarthquakeParseResult: ...
+
+
+@dataclass(frozen=True)
+class EarthquakeSearchQuery:
+    start_at: datetime
+    end_at: datetime
+    min_longitude: float
+    min_latitude: float
+    max_longitude: float
+    max_latitude: float
+    min_magnitude: float | None = None
+    limit: int = 50
+    offset: int = 0
+
+
+@dataclass(frozen=True)
+class EarthquakeSearchRecord:
+    id: UUID
+    event_id: str
+    event_time: datetime
+    provider_updated_at: datetime
+    longitude: float
+    latitude: float
+    depth_km: float
+    magnitude: float | None
+    place: str | None
+    event_type: str | None
+    provider_status: str | None
+    tsunami: bool
+    significance: int | None
+    detail_url: str | None
+    quality_flags: tuple[str, ...]
+    normalized_at: datetime
+    source_slug: str
+    source_display_name: str
+    source_url: str
+    attribution_text: str
+    data_version: str
+    schema_version: str
+    published_at: datetime | None
+    retrieved_at: datetime
+    ingested_at: datetime
+    source_state: Literal["LIVE", "CACHED", "DELAYED", "OFFLINE"]
+    cache_age_seconds: int | None
+
+
+@dataclass(frozen=True)
+class EarthquakeSearchResult:
+    records: tuple[EarthquakeSearchRecord, ...]
+    total: int
+
+
+class EarthquakeSearchRepository(Protocol):
+    def search(self, query: EarthquakeSearchQuery) -> EarthquakeSearchResult: ...

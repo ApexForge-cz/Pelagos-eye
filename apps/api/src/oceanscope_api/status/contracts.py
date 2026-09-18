@@ -58,6 +58,14 @@ class SourceStatusRepository(Protocol):
 
 
 @dataclass(frozen=True)
+class FreshnessSnapshot:
+    age_seconds: int | None
+    live_ttl_seconds: int
+    delayed_ttl_seconds: int
+    cache_ttl_seconds: int | None
+
+
+@dataclass(frozen=True)
 class SourceStatus:
     slug: str
     display_name: str
@@ -69,10 +77,23 @@ class SourceStatus:
     state: str
     availability: str
     has_usable_data: bool
+    cache_age_seconds: int | None
+    freshness: FreshnessSnapshot
     latest_run: IngestionRunSnapshot | None
     latest_usable_run: IngestionRunSnapshot | None
     latest_version: SourceVersionSnapshot | None
     quality_issues: tuple[QualityIssueSnapshot, ...]
+
+
+@dataclass(frozen=True)
+class SourceAvailabilitySnapshot:
+    state: Literal["LIVE", "CACHED", "DELAYED", "OFFLINE"]
+    has_usable_data: bool
+    cache_age_seconds: int | None
+
+
+class SourceAvailabilityLookup(Protocol):
+    def get_source_availability(self, slug: str) -> SourceAvailabilitySnapshot | None: ...
 
 
 @dataclass(frozen=True)

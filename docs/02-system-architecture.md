@@ -2,7 +2,10 @@
 
 ## Architecture decision
 
-OceanScope will start as a **clean-ish modular monolith** with separate process entry points for the web API, live ingestion, and heavy batch work. This preserves clear boundaries without imposing distributed-system overhead on a single developer.
+OceanScope uses a **clean-ish modular monolith** with separate process entry points for the
+web API, live ingestion, and heavy batch work where justified. This preserves clear
+ownership boundaries for a two-developer team without imposing premature
+distributed-system overhead.
 
 ## Context
 
@@ -31,7 +34,7 @@ Users
 | Batch worker | archive imports, aggregations, anomaly recomputation | scheduled/on demand |
 | PostgreSQL/PostGIS | canonical normalized state, tracks, ports, events, spatial queries | primary system of record |
 | Redis | bounded cache, ephemeral fan-out/coordination, rate counters | not the only durable record |
-| Object storage or local data volume | raw download manifests and large immutable artifacts | decide in Phase 2 |
+| Local data volume; object storage later if justified | checksummed raw artifacts and reproducibility manifests | local volume implemented; object storage remains a measured future decision |
 
 ## Backend layers
 
@@ -163,13 +166,11 @@ All time-series/spatial tables include source identity, source/event time, inges
 - A global live subscription may exceed practical bandwidth/storage; initial geographic/message filters must be explicit.
 - Provider abstraction must not erase source-specific semantics; canonical fields retain source extensions and raw references.
 
-## Architecture decision records planned for Phase 1
+## Architecture decision status
 
-- ADR-001 repository layout and modular-monolith boundaries
-- ADR-002 Cesium/MapLibre/deck.gl composition and loading policy
-- ADR-003 live-event durability and Redis role
-- ADR-004 AIS storage, partitioning, and retention
-- ADR-005 raw artifact storage
-- ADR-006 authentication scope for v1
-- ADR-007 deployment target and cost ceiling
-
+Accepted ADRs currently cover repository boundaries, toolchain, runtime contracts, local
+infrastructure, licensing, provenance, official port ingestion, USGS revision handling,
+Open-Meteo snapshots, and bounded MarineCadastre history. Decisions for Cesium/MapLibre/
+deck.gl composition, live-event durability, AIS partitioning and retention, authentication,
+and production deployment remain phase-scoped work and must be recorded before those
+capabilities are released.

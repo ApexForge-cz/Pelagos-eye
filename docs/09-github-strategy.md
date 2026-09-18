@@ -9,17 +9,35 @@ The repository should demonstrate disciplined product engineering, data correctn
 - Visibility: public when Phase 0 content has been reviewed for personal information and terms.
 - Default branch: `main`, protected once CI exists.
 - Merge method: squash merge for focused pull requests; retain meaningful PR descriptions.
-- Require pull request and required checks even for solo work where practical.
+- Require pull requests, owner review, and required checks for both developers.
 - Enable secret scanning, push protection, dependency alerts, and automated security updates with review.
 - Disable unused features until there is a maintenance plan.
 
 ## Branch and commit model
 
-- Short-lived branches: `feat/...`, `fix/...`, `docs/...`, `chore/...`, `data/...`.
+- Short-lived functional branches: `ui/*`, `gis/*`, `api/*`, `data/*`, `ais/*`,
+  `history/*`, `risk/*`, `infra/*`, `test/*`, `docs/*`, `contract/*`, and `fix/*`.
+- Do not use long-lived `developer-a` or `developer-b` branches and do not push directly to `main`.
 - One coherent outcome per pull request.
 - Conventional-style commit subjects are recommended but not a release blocker.
 - Never commit raw bulk datasets, credentials, local caches, database volumes, or generated build output.
 - Architectural or provider changes include updated ADR/source/risk documentation in the same PR.
+- Do not run repository-wide formatting, rename broad directory trees, or refactor another
+  owner's module as incidental work.
+
+## Ownership and conflict control
+
+- Developer A owns product direction, architecture, `apps/web`, UI/GIS/map work, core API
+  contracts, integration, README/demo, and release.
+- Developer B owns new providers, ingestion/workers, data pipelines, backend data
+  operations, infrastructure, provider/backend tests, and performance pipelines.
+- Existing Ownership Wins: already stable modules keep their current owner.
+- Contracts, migrations, root configuration, README, AGENTS, and GitHub files are shared;
+  prefer separate small pull requests and explicit review.
+- Only one developer creates a database migration at a time. Developer B may propose a
+  schema change; Developer A creates or reviews the final Alembic migration.
+- Contract-first development allows A to use isolated `DEV DATA` fixtures while B builds
+  the same backend contract. Production uses real APIs only.
 
 ## Milestones
 
@@ -65,7 +83,7 @@ Each PR records outcome, linked issue, screenshots for UI, data/source impact, m
 
 ## Projects and planning
 
-Use a simple board: `Backlog` → `Ready` → `In progress` → `Review` → `Done`, plus a blocked field/reason. Limit work in progress to one major slice and one small maintenance item to protect solo focus.
+Use a simple board: `Backlog` → `Ready` → `In progress` → `Review` → `Done`, plus a blocked field/reason. Limit each developer to one major slice and one small maintenance item; mark owner, contract, allowed paths, and dependency before work starts.
 
 ## CI/CD plan
 
@@ -118,4 +136,3 @@ Before public deployment: `LICENSE`, `SECURITY.md`, `CITATION.cff`, `CHANGELOG.m
 ## Community posture
 
 Until maintenance capacity exists, label the project as a personal project welcoming focused issues rather than promising response times. Security reports should use private reporting once enabled. Data-correction reports must include source and observation time and must not expose sensitive information.
-

@@ -148,6 +148,20 @@ and after source, architecture, team, or deployment changes.
   Cross-language fixtures and an implemented route/gateway are still required before the
   contract can move from proposed to accepted.
 
+## Phase 4 provider verification review - 2026-09-19
+
+- R-01, R-02, R-03, and R-09 remain blocking. Official AISStream GitHub repositories
+  provide pinned technical evidence for the WebSocket endpoint, subscription envelope,
+  compression example, and message models, but the provider documentation and terms
+  pages returned a Cloudflare `403` challenge during review.
+- Historical issue #25 language about “no restrictions” is retained only as historical
+  evidence and is not treated as a current license or redistribution grant. Current
+  questions about public display, caching, storage, retention, commercial use, and
+  downstream reuse remain unanswered for release purposes.
+- The provider-neutral client contract remains design evidence. Do not add a provider
+  adapter, live connection, API key, raw fixture, route, worker, or public live-data
+  claim until the current terms are archived and the source gate is approved.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

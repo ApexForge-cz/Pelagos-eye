@@ -1,6 +1,9 @@
 # Data Sources and Verification
 
-Verified against official documentation and live official endpoints on **2026-09-17**. URLs and terms can change; each integration must re-check the official source before release.
+Verified against official documentation and live official endpoints on **2026-09-17** for the
+Phase 2 sources. URLs and terms can change; each integration must re-check the official
+source before release. The separate AISStream review on 2026-09-19 records current
+verification limits in `docs/33-aisstream-provider-verification.md`.
 
 ## Source matrix
 
@@ -20,16 +23,20 @@ Verified against official documentation and live official endpoints on **2026-09
 - Documentation: <https://aisstream.io/documentation>
 - Service: <https://aisstream.io/>
 
-### Verified contract
+### Technical contract evidence
 
 - WebSocket endpoint: `wss://stream.aisstream.io/v0/stream`.
-- Send one complete subscription within three seconds.
-- Required: `APIKey`, `BoundingBoxes`; optional: `FiltersShipMMSI`, `FilterMessageTypes`.
-- MMSI filter accepts up to 200 nine-character identifiers per subscription.
-- Limits documented on the verification date: three subscribed connections per account, three open connections per originating IP, subscription replacement at most once per second.
-- Server messages use binary frames whose payload is UTF-8 JSON.
-- Direct browser connections are not permitted. The backend must keep the key secret and proxy only required client data.
-- The provider documents no uptime SLA and no durable replay.
+- The official example uses one complete subscription with `APIKey`, `BoundingBoxes`,
+  and optional `FiltersShipMMSI` / `FilterMessageTypes` fields.
+- The official example connects to `wss://stream.aisstream.io/v0/stream`; Python enables
+  `deflate` compression and handles provider messages as UTF-8 JSON payloads.
+- The official message-model repository defines the subscription envelope and common
+  position/static-data message types.
+- Historical planning notes recorded no SLA and no durable replay; these are not a
+  current terms certification. See the pinned revisions and Cloudflare limitation in
+  `docs/33-aisstream-provider-verification.md`.
+- The backend must keep any API key server-side. Direct browser use and production
+  proxying remain unauthorized until current terms are reviewed.
 
 ### Fields to retain
 
@@ -37,7 +44,7 @@ At minimum: message type, provider metadata, MMSI when present, ship name when p
 
 ### Engineering constraints
 
-- Negotiate compression and monitor whether it is enabled.
+- Negotiate compression where supported and monitor whether it is enabled.
 - Read continuously; apply backpressure and record any internal drop/coalescing.
 - Reconnect using exponential backoff with jitter and resubmit the full subscription.
 - Begin with bounded regions and message types; a whole-world promise requires measured bandwidth, storage, and source approval.
@@ -45,7 +52,12 @@ At minimum: message type, provider metadata, MMSI when present, ship name when p
 
 ### License/use note
 
-An API account and current provider terms are required. The public documentation establishes technical use but the planning review did not identify a reusable open-data license grant for redistributing raw streams. Before public deployment, archive the applicable terms and confirm display, caching, retention, and redistribution rights. Treat this as a release blocker, not an assumed permission.
+An API account and current provider terms are required. The official repositories
+establish technical use, but the 2026-09-19 review could not retrieve the current
+website terms and did not identify a reusable open-data license grant for redistributing
+raw streams. Before implementation or public deployment, archive the applicable terms
+and confirm display, caching, retention, commercial-use, and redistribution rights.
+Treat this as a release blocker, not an assumed permission.
 
 ## 2. MarineCadastre / AccessAIS
 

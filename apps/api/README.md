@@ -60,13 +60,18 @@ its downloaded artifact local until a release-time terms review is completed.
   effective cache age, latest ingestion, latest usable version, record counts, and
   quality findings. The current run and latest usable run are separate so a provider
   failure can use a still-valid verified cache without relabeling it as live.
-- `GET /system/status` returns the application version and database availability. A
-  missing or unreachable database is `DEGRADED` / `OFFLINE` with `DATA UNAVAILABLE`.
+- `GET /system/status` returns the application version, PostGIS and Redis connectivity,
+  and one summary per registered provider. Provider summaries use the same computed
+  freshness contract as `/data/sources` and include source publication/retrieval times,
+  effective cache age, and the latest ingestion run's UTC times and record counts. A
+  missing or unreachable dependency is `DEGRADED` / `OFFLINE` with `DATA UNAVAILABLE`.
+  Provider state is based on stored ingestion evidence; this endpoint does not contact
+  upstream providers on every request.
 - `GET /data/sources` returns RFC 9457-style `application/problem+json` with status 503
   when the database cannot answer safely.
 
-These endpoints expose metadata only. They do not return port records or bypass the WPI
-redistribution gate.
+These status endpoints expose metadata only. They do not return source records or bypass
+the WPI and MarineCadastre redistribution gates.
 
 ## Bounded port query
 

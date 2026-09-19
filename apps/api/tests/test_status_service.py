@@ -1,10 +1,12 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
+from oceanscope_api.core.errors import DatabaseUnavailableError
 from oceanscope_api.status.contracts import (
     IngestionRunSnapshot,
     QualityIssueSnapshot,
     SourceHistory,
+    SourceStatus,
     SourceVersionSnapshot,
 )
 from oceanscope_api.status.service import SourceStatusService, SystemStatusService
@@ -196,11 +198,104 @@ def test_immutable_historical_archive_cache_does_not_expire() -> None:
 
 
 def test_system_status_reports_database_state_without_fallback_values() -> None:
-    ready = SystemStatusService(lambda: True).get_status()
-    degraded = SystemStatusService(lambda: False).get_status()
+    source = SourceStatusService(StubRepository([base_history()]), now=lambda: NOW).list_sources()[
+        0
+    ]
+    ready = SystemStatusService(
+        lambda: True,
+        lambda: True,
+        lambda: [source],
+        now=lambda: NOW,
+    ).get_status()
+    redis_degraded = SystemStatusService(
+        lambda: True,
+        lambda: False,
+        lambda: [source],
+        now=lambda: NOW,
+    ).get_status()
+
+    def unexpected_source_query() -> list[SourceStatus]:
+        raise AssertionError("source query must be skipped")
+
+    degraded = SystemStatusService(
+        lambda: False,
+        lambda: False,
+        unexpected_source_query,
+        now=lambda: NOW,
+    ).get_status()
 
     assert ready.overall_state == "READY"
     assert ready.database.state == "LIVE"
+    assert ready.redis.state == "LIVE"
+    assert ready.checked_at == NOW
+    assert ready.providers[0].slug == "test-source"
+    assert ready.providers[0].state == "OFFLINE"
+    assert ready.providers[0].availability == "DATA UNAVAILABLE"
+    assert redis_degraded.overall_state == "DEGRADED"
+    assert redis_degraded.database.state == "LIVE"
+    assert redis_degraded.redis.state == "OFFLINE"
+    assert len(redis_degraded.providers) == 1
     assert degraded.overall_state == "DEGRADED"
     assert degraded.database.state == "OFFLINE"
     assert degraded.database.detail == "DATA UNAVAILABLE"
+    assert degraded.redis.state == "OFFLINE"
+    assert degraded.redis.detail == "DATA UNAVAILABLE"
+    assert degraded.providers == ()
+
+
+def test_system_status_downgrades_database_when_provider_status_query_fails() -> None:
+    def unavailable() -> list[SourceStatus]:
+        raise DatabaseUnavailableError("TEST DATA database unavailable")
+
+    result = SystemStatusService(
+        lambda: True,
+        lambda: True,
+        unavailable,
+        now=lambda: NOW,
+    ).get_status()
+
+    assert result.overall_state == "DEGRADED"
+    assert result.database.state == "OFFLINE"
+    assert result.providers == ()
+
+
+def test_system_status_exposes_latest_provider_run_and_source_times() -> None:
+    version = SourceVersionSnapshot(
+        id=SOURCE_VERSION_ID,
+        data_version="TEST-DATA-1",
+        schema_version="test-schema-v1",
+        source_url="https://example.test/feed.geojson",
+        published_at=NOW - timedelta(minutes=1),
+        retrieved_at=NOW,
+    )
+    run = IngestionRunSnapshot(
+        id=USABLE_RUN_ID,
+        source_version_id=SOURCE_VERSION_ID,
+        status="partial",
+        source_state="LIVE",
+        cache_age_seconds=None,
+        started_at=NOW,
+        finished_at=NOW + timedelta(seconds=5),
+        records_received=2,
+        records_accepted=1,
+        records_rejected=1,
+    )
+    source = SourceStatusService(
+        StubRepository([base_history(slug="usgs-earthquakes", runs=(run,), versions=(version,))]),
+        now=lambda: NOW + timedelta(minutes=10),
+    ).list_sources()[0]
+
+    result = SystemStatusService(
+        lambda: True,
+        lambda: True,
+        lambda: [source],
+        now=lambda: NOW + timedelta(minutes=10),
+    ).get_status()
+    provider = result.providers[0]
+
+    assert provider.state == "DELAYED"
+    assert provider.source_published_at == NOW - timedelta(minutes=1)
+    assert provider.source_retrieved_at == NOW
+    assert provider.latest_run == run
+    assert provider.latest_run.records_accepted == 1
+    assert provider.latest_run.records_rejected == 1

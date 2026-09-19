@@ -62,6 +62,8 @@ checks passed, but manual responsive visual inspection remains outstanding.
   restricted from public record APIs
 - canonical port entity resolution, map rendering, live AIS, and production deployment
   belong to later phases
+- provider health is derived from stored ingestion/freshness evidence; active upstream
+  probes and scheduled refresh remain follow-up work
 
 ## Post-gate revalidation (2026-09-18)
 
@@ -85,3 +87,10 @@ The owner-requested Phase 0-2 recheck passed without changing the gate decision:
 
 A browser surface was unavailable to the automation environment, so supported-browser
 manual responsive and accessibility review remains the same explicit non-blocking follow-up.
+
+## Post-gate system-health hardening (2026-09-19)
+
+Issue `#16` extends `/system/status` with bounded Redis connectivity and PostGIS-backed
+provider/latest-ingestion summaries. The implementation and current verification evidence
+are recorded in `docs/27-phase-2-system-health-hardening-verification.md`. This hardening
+does not change the Phase 2 gate decision or authorize Phase 3 work.

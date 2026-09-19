@@ -2,8 +2,8 @@
 
 This roadmap is sequential at the gate level, not a promise of dates. Each phase may contain small vertical slices. A later phase starts only after its dependencies and acceptance evidence exist.
 
-Current state on 2026-09-18: Phase 0, Phase 1, and Phase 2 are complete. The owner has
-authorized Phase 3 Digital Earth, which is active on `gis/phase-3-digital-earth`. Developer A remains Project
+Current state on 2026-09-19: Phase 0, Phase 1, Phase 2, and Phase 3 are complete. Phase 4
+Live AIS remains planned and requires a separate owner authorization. Developer A remains Project
 Lead + Full-Stack GIS Engineer with about 65%-70% of the forward workload; Developer B is
 Data & Platform Engineer with about 30%-35%. Existing Ownership Wins: stable modules are not
 moved merely to fit the new responsibility table.
@@ -72,11 +72,10 @@ scheduling remain explicit follow-up work rather than retroactive gate claims.
 
 ## Phase 3 — Digital Earth
 
-**Status:** Active; explicitly authorized by the owner on 2026-09-18. The first accepted
-slice is the contract-first 2D spatial workspace defined in `docs/27-phase-3-kickoff.md`.
-After that evidence passed, the owner authorized a focused Three.js globe as the second
-increment. Cesium and deck.gl remain conditional on requirements not covered by the focused
-globe and accepted MapLibre adapter.
+**Status:** Complete; final gate evidence is recorded in `docs/30-phase-3-gate-verification.md`.
+The accepted delivery includes the contract-first 2D spatial workspace and focused Three.js
+globe over real bounded data. Cesium and deck.gl remain conditional on requirements not
+covered by the accepted globe and MapLibre adapter.
 
 **Objective:** Deliver the map-first spatial shell using real port, marine, and hazard data.
 

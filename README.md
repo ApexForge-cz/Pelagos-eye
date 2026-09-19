@@ -3,9 +3,9 @@
 > Global Maritime Situational Awareness & Analytics Platform<br>
 > 全球港航态势感知与智能分析平台
 
-**Status: Phase 3 Active — Digital Earth**
+**Status: Phase 3 Complete — Digital Earth**
 
-OceanScope is a map-first web platform for exploring maritime activity, ports, ocean conditions, and risk signals. Phases 0 through 2 are complete, and Phase 3 Digital Earth is now active. Phase 2 delivered the shared provenance foundation, reproducible imports from five official source families, bounded public queries, and a minimal real-data status UI. Phase 3 now has accepted local 2D and focused 3D slices over real port, earthquake, and marine-forecast data. No public WPI or restricted historical-AIS record API, live AIS layer, production deployment, or completed digital-earth phase is claimed yet.
+OceanScope is a map-first web platform for exploring maritime activity, ports, ocean conditions, and risk signals. Phases 0 through 3 are complete. Phase 2 delivered the shared provenance foundation, reproducible imports from five official source families, bounded public queries, and a minimal real-data status UI. Phase 3 delivered accepted 2D and focused 3D spatial workspaces over real port, earthquake, and marine-forecast data. No public WPI or restricted historical-AIS record API, live AIS layer, or production deployment is claimed yet.
 
 ## Project Vision
 
@@ -145,7 +145,7 @@ See [docs/03-data-sources.md](docs/03-data-sources.md) for verified endpoints, f
 | 0     | Research & Planning    | Complete |
 | 1     | Engineering Foundation | Complete |
 | 2     | Real Data Foundation   | Complete |
-| 3     | Digital Earth          | Active   |
+| 3     | Digital Earth          | Complete |
 | 4     | Live AIS               | Planned  |
 | 5     | Historical Analytics   | Planned  |
 | 6     | Risk & Anomaly Engine  | Planned  |
@@ -158,7 +158,7 @@ Detailed objectives, dependencies, risks, acceptance criteria, and definitions o
 
 ## Development Status
 
-Phases 0 through 2 are complete. Phase 3 Digital Earth was authorized on 2026-09-18 and is active on the `gis/phase-3-digital-earth` branch. Its bounded 2D spatial slice and focused 3D-globe increment have passed local acceptance with typed viewport contracts, real port/earthquake/marine data, 3D/2D fallback, selection details, legends, attribution, freshness, explicit offline/coverage states, reduced-motion handling, and an accessible non-map representation. Cesium, deck.gl, live AIS, scheduled refresh, entity resolution, and production deployment remain unfinished. The Phase 2 foundation remains the source of truth for provenance, redistribution gates, cache semantics, and `DATA UNAVAILABLE` behavior. See `docs/28-phase-3-spatial-slice-verification.md` and `docs/29-phase-3-globe-verification.md` for evidence and limitations.
+Phases 0 through 3 are complete. Phase 3 Digital Earth passed its final gate on 2026-09-19 with typed viewport contracts, real port/earthquake/marine data, 3D/2D fallback, selection details, legends, attribution, freshness, explicit offline/coverage states, reduced-motion handling, interaction recovery, and an accessible non-map representation. Cesium, deck.gl, live AIS, scheduled refresh, entity resolution, and production deployment remain unfinished. The Phase 2 foundation remains the source of truth for provenance, redistribution gates, cache semantics, and `DATA UNAVAILABLE` behavior. See `docs/28-phase-3-spatial-slice-verification.md`, `docs/29-phase-3-globe-verification.md`, and `docs/30-phase-3-gate-verification.md` for evidence and limitations.
 
 ## Development Quick Start
 

@@ -59,6 +59,8 @@ interface BoundaryCollection {
 
 const EARTH_RADIUS = 1
 const INITIAL_LONGITUDE = 105
+const PRESENTATION_ROTATION_SPEED = 0.5
+const AUTO_ROTATION_RESUME_DELAY_MS = 4_000
 const GLOBAL_BOUNDS: ViewportBounds = { west: -180, south: -85, east: 180, north: 85 }
 
 export function GlobeWorkspace({
@@ -227,14 +229,28 @@ export function GlobeWorkspace({
     controls.minDistance = 1.55
     controls.maxDistance = 5.2
     controls.autoRotate = !reducedMotion
-    controls.autoRotateSpeed = 0.32
+    controls.autoRotateSpeed = PRESENTATION_ROTATION_SPEED
     controlsRef.current = controls
 
+    let resumeRotationTimer: number | undefined
     const stopAutomaticMotion = () => {
+      if (resumeRotationTimer !== undefined) {
+        window.clearTimeout(resumeRotationTimer)
+        resumeRotationTimer = undefined
+      }
       controls.autoRotate = false
       setMotionStopped(true)
     }
+    const scheduleAutomaticMotion = () => {
+      if (reducedMotion) return
+      resumeRotationTimer = window.setTimeout(() => {
+        controls.autoRotate = true
+        setMotionStopped(false)
+        resumeRotationTimer = undefined
+      }, AUTO_ROTATION_RESUME_DELAY_MS)
+    }
     controls.addEventListener('start', stopAutomaticMotion)
+    controls.addEventListener('end', scheduleAutomaticMotion)
 
     const raycaster = new Raycaster()
     const pointer = new Vector2()
@@ -307,6 +323,8 @@ export function GlobeWorkspace({
       renderer.domElement.removeEventListener('pointermove', handlePointerMove)
       renderer.domElement.removeEventListener('click', handleClick)
       controls.removeEventListener('start', stopAutomaticMotion)
+      controls.removeEventListener('end', scheduleAutomaticMotion)
+      if (resumeRotationTimer !== undefined) window.clearTimeout(resumeRotationTimer)
       controls.dispose()
       disposeObject(scene)
       renderer.dispose()
@@ -341,7 +359,7 @@ export function GlobeWorkspace({
       <div className="globe-mode-state">
         <span className="status-dot" /> 3D EARTH · WGS 84
       </div>
-      {motionStopped && <div className="globe-motion-state">AUTO ROTATION PAUSED</div>}
+      {motionStopped && <div className="globe-motion-state">AUTO ROTATION RESUMES SOON</div>}
       <button className="globe-reset" type="button" onClick={resetView}>
         重置视角
       </button>

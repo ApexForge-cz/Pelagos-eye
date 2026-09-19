@@ -109,7 +109,12 @@ def test_data_sources_endpoint_returns_problem_when_database_is_unavailable() ->
 
 
 def test_system_status_endpoint_reports_degraded_database() -> None:
-    app.dependency_overrides[get_system_status_service] = lambda: SystemStatusService(lambda: False)
+    app.dependency_overrides[get_system_status_service] = lambda: SystemStatusService(
+        lambda: False,
+        lambda: False,
+        lambda: [],
+        now=lambda: NOW,
+    )
     try:
         response = asyncio.run(request("/system/status"))
     finally:
@@ -121,3 +126,33 @@ def test_system_status_endpoint_reports_degraded_database() -> None:
         "state": "OFFLINE",
         "detail": "DATA UNAVAILABLE",
     }
+    assert response.json()["redis"] == {
+        "state": "OFFLINE",
+        "detail": "DATA UNAVAILABLE",
+    }
+    assert response.json()["providers"] == []
+
+
+def test_system_status_endpoint_exposes_provider_freshness_and_latest_run() -> None:
+    source_service = StubSourceStatusService()
+    app.dependency_overrides[get_system_status_service] = lambda: SystemStatusService(
+        lambda: True,
+        lambda: True,
+        source_service.list_sources,
+        now=lambda: NOW,
+    )
+    try:
+        response = asyncio.run(request("/system/status"))
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["overall_state"] == "READY"
+    assert body["redis"]["state"] == "LIVE"
+    provider = body["providers"][0]
+    assert provider["slug"] == "test-source"
+    assert provider["state"] == "LIVE"
+    assert provider["source_retrieved_at"] == NOW.isoformat().replace("+00:00", "Z")
+    assert provider["latest_run"]["records_received"] == 1
+    assert provider["latest_run"]["records_accepted"] == 1

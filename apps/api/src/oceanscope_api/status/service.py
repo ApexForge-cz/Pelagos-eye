@@ -5,12 +5,14 @@ from datetime import UTC, datetime
 from typing import Literal, cast
 
 from oceanscope_api import __version__
+from oceanscope_api.core.errors import DatabaseUnavailableError
 from oceanscope_api.provenance.models import IngestionStatus
 from oceanscope_api.status.contracts import (
     SourceAvailabilitySnapshot,
     SourceStatus,
     SourceStatusRepository,
     SystemDependencyStatus,
+    SystemProviderStatus,
     SystemStatus,
 )
 from oceanscope_api.status.freshness import evaluate_freshness, policy_for
@@ -101,20 +103,64 @@ class SourceStatusService:
 
 
 class SystemStatusService:
-    def __init__(self, database_probe: Callable[[], bool]) -> None:
+    def __init__(
+        self,
+        database_probe: Callable[[], bool],
+        redis_probe: Callable[[], bool],
+        source_statuses: Callable[[], list[SourceStatus]],
+        *,
+        now: Callable[[], datetime] | None = None,
+    ) -> None:
         self._database_probe = database_probe
+        self._redis_probe = redis_probe
+        self._source_statuses = source_statuses
+        self._now = now or (lambda: datetime.now(UTC))
 
     def get_status(self) -> SystemStatus:
         database_available = self._database_probe()
+        redis_available = self._redis_probe()
+        sources: list[SourceStatus] = []
+        if database_available:
+            try:
+                sources = self._source_statuses()
+            except DatabaseUnavailableError:
+                database_available = False
+
         return SystemStatus(
             service="oceanscope-api",
             version=__version__,
-            overall_state="READY" if database_available else "DEGRADED",
-            checked_at=datetime.now(UTC),
+            overall_state=("READY" if database_available and redis_available else "DEGRADED"),
+            checked_at=self._now(),
             database=SystemDependencyStatus(
                 state="LIVE" if database_available else "OFFLINE",
                 detail=(
                     "Database connectivity verified" if database_available else "DATA UNAVAILABLE"
                 ),
             ),
+            redis=SystemDependencyStatus(
+                state="LIVE" if redis_available else "OFFLINE",
+                detail="Redis connectivity verified" if redis_available else "DATA UNAVAILABLE",
+            ),
+            providers=tuple(_system_provider_status(source) for source in sources),
         )
+
+
+def _system_provider_status(source: SourceStatus) -> SystemProviderStatus:
+    version = source.latest_version
+    return SystemProviderStatus(
+        slug=source.slug,
+        display_name=source.display_name,
+        state=cast(
+            Literal["LIVE", "CACHED", "DELAYED", "OFFLINE"],
+            source.state,
+        ),
+        availability=cast(
+            Literal["AVAILABLE", "DATA UNAVAILABLE"],
+            source.availability,
+        ),
+        cache_age_seconds=source.cache_age_seconds,
+        freshness=source.freshness,
+        source_published_at=version.published_at if version is not None else None,
+        source_retrieved_at=version.retrieved_at if version is not None else None,
+        latest_run=source.latest_run,
+    )

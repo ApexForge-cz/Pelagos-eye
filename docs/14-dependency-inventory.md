@@ -1,6 +1,6 @@
 # Direct Dependency Inventory
 
-- Review date: 2026-09-17
+- Review date: 2026-09-19
 - Sources of truth: `apps/api/uv.lock` and root `package-lock.json`
 - Policy: direct dependencies require a current use; transitive dependencies remain locked
   and are reviewed by automated audit/update tooling.
@@ -15,6 +15,7 @@
 | HTTPX | 0.28.1 | BSD-3-Clause | Bounded official-source HTTP downloads with proxy support |
 | psycopg | 3.3.5 | LGPL-3.0-only | PostgreSQL driver for migrations/later repositories |
 | pydantic-settings | 2.15.0 | MIT | Typed environment configuration and secret wrappers |
+| redis | 6.4.0 | MIT | Bounded Redis connectivity probe for system health; later cache/coordination client |
 | SQLAlchemy | 2.0.54 | MIT | Repository and migration metadata foundation |
 | structlog | 25.5.0 | MIT OR Apache-2.0 | Structured, correlation-friendly logs |
 | Uvicorn | 0.53.0 | BSD-3-Clause | ASGI development/container server |

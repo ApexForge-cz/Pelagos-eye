@@ -15,6 +15,7 @@ Proposed decisions remain open and must not be treated as final.
 | [0008](0008-usgs-event-revisions.md) | USGS feed versioning and latest-event revision semantics | Accepted |
 | [0009](0009-open-meteo-forecast-snapshots.md) | Bounded Open-Meteo marine forecast snapshots | Accepted |
 | [0010](0010-bounded-marinecadastre-history.md) | Bounded NOAA MarineCadastre historical AIS imports | Accepted |
+| [0011](0011-live-ais-client-contract.md) | Live AIS client contract and continuity semantics | Proposed |
 
 Later GIS, live-event durability, AIS retention, raw artifact storage, and authentication
 decisions remain deferred until the relevant phase has evidence.

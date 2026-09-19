@@ -128,6 +128,26 @@ and after source, architecture, team, or deployment changes.
   forecast. Provider failure remains `DATA UNAVAILABLE`, and viewport totals distinguish
   records loaded from records matched.
 
+## Phase 4 contract entry review - 2026-09-19
+
+- R-01, R-02, and R-03 remain hard entry gates. The current provider documentation and
+  applicable display, cache, retention, redistribution, attribution, connection, and rate
+  terms must be reverified before provider code or public live-data claims are authorized.
+- R-10 and R-39 now have a proposed client contract that keeps source state, availability,
+  coverage, cache age, and empty observations distinct. No route currently serves this
+  contract, so this is design evidence rather than acceptance evidence for live data.
+- R-14 is addressed in the proposal by nullable AIS fields, explicit units/ranges, and quality
+  flags. Provider sentinel values must normalize to `null`; identity/static fields remain
+  fallible observations.
+- R-15 and R-16 now have proposed epoch, sequence, status, and gap semantics. The contract
+  explicitly disallows replay claims, but reconnect, queue, coalescing, and slow-client limits
+  remain unresolved and block implementation acceptance.
+- R-19 remains unchanged: a future AISStream key must stay in server-only typed settings and
+  must never enter browser bundles, public events, logs, fixtures, or committed files.
+- R-34 is reduced by mirrored Python and TypeScript v1 shapes plus focused validation tests.
+  Cross-language fixtures and an implemented route/gateway are still required before the
+  contract can move from proposed to accepted.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

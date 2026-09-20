@@ -50,8 +50,8 @@ The executable proposal lives in
 - Vessel name, IMO, call sign, ship type, dimensions, and destination require a separately
   reviewed static/voyage observation contract before they can appear in search or detail UI.
 - A later replay service would require a protocol revision or a separate historical API.
-- The duplicated Python and TypeScript shapes require contract review and cross-language
-  fixture tests when a real route is introduced.
+- The duplicated Python and TypeScript shapes share one authoritative provider-neutral fixture
+  set. Contract changes and any future real route must update and pass both consumers.
 
 ## Alternatives considered
 

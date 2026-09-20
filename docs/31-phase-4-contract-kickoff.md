@@ -82,7 +82,7 @@ Phase 4 implementation must not begin until the owner records and approves all o
 ## Proposed implementation order after authorization
 
 1. Developer B verifies the provider and submits a source/terms record plus a contract mapping.
-2. The shared contract PR is accepted or revised; cross-language fixtures become authoritative.
+2. The shared contract is accepted or revised; the cross-language fixtures remain authoritative.
 3. Developer B implements bounded ingestion and failure behavior behind the adapter boundary.
 4. Developer B implements latest state, persistence, gateway, and backend/load tests.
 5. Developer A integrates snapshot/status/gap handling before rendering live positions.

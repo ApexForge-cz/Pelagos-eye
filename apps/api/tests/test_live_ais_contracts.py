@@ -1,4 +1,7 @@
+import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import cast
 from uuid import uuid4
 
 import pytest
@@ -7,6 +10,19 @@ from pydantic import ValidationError
 from oceanscope_api.api.contracts.live_ais import live_ais_server_event_adapter
 
 NOW = datetime(2026, 9, 19, 12, 0, tzinfo=UTC)
+SHARED_FIXTURE_PATH = (
+    Path(__file__).parents[3] / "test-fixtures" / "live-ais" / "v1-server-events.json"
+)
+
+
+def shared_server_events() -> list[dict[str, object]]:
+    fixture: object = json.loads(SHARED_FIXTURE_PATH.read_text(encoding="utf-8"))
+    assert isinstance(fixture, dict)
+    assert fixture.get("fixture_label") == "TEST DATA"
+    events = fixture.get("events")
+    assert isinstance(events, list)
+    assert all(isinstance(event, dict) for event in events)
+    return cast(list[dict[str, object]], events)
 
 
 def position_payload() -> dict[str, object]:
@@ -46,6 +62,21 @@ def envelope(event: str) -> dict[str, object]:
         "sequence": 42,
         "emitted_at": (NOW + timedelta(seconds=2)).isoformat(),
     }
+
+
+def test_shared_v1_fixtures_validate_every_server_event() -> None:
+    events = shared_server_events()
+
+    parsed = [live_ais_server_event_adapter.validate_python(event) for event in events]
+
+    assert [event.event for event in parsed] == [
+        "vessel.snapshot",
+        "stream.status",
+        "vessel.position",
+        "stream.gap",
+    ]
+    assert [event.sequence for event in parsed] == [0, 1, 2, 3]
+    assert len({event.stream_epoch for event in parsed}) == 1
 
 
 def test_position_event_accepts_normalized_nullable_dynamic_fields() -> None:

@@ -1,0 +1,125 @@
+{
+  "fixture_label": "TEST DATA",
+  "description": "Provider-neutral Live AIS v1 contract events. Not production data.",
+  "events": [
+    {
+      "protocol_version": "1.0",
+      "event": "vessel.snapshot",
+      "stream_epoch": "11111111-1111-4111-8111-111111111111",
+      "sequence": 0,
+      "emitted_at": "2026-09-20T12:00:02Z",
+      "availability": "AVAILABLE",
+      "source_state": "LIVE",
+      "cache_age_seconds": null,
+      "coverage": {
+        "state": "COVERED",
+        "description": "TEST DATA bounded contract region.",
+        "bounds": {
+          "west": -75.0,
+          "south": 40.0,
+          "east": -73.0,
+          "north": 42.0
+        },
+        "effective_at": "2026-09-20T12:00:00Z"
+      },
+      "positions": [
+        {
+          "observation_id": "test:position:0001",
+          "mmsi": "999000001",
+          "observed_at": "2026-09-20T12:00:00Z",
+          "longitude": -74.01,
+          "latitude": 40.7,
+          "speed_over_ground_knots": 12.4,
+          "course_over_ground_deg": 91.2,
+          "true_heading_deg": 90,
+          "navigational_status_code": 0,
+          "quality_flags": ["TEST DATA"],
+          "provenance": {
+            "source_slug": "test-provider",
+            "source_url": "https://example.test/live-ais",
+            "attribution_text": "TEST DATA only",
+            "data_version": "test-data-v1",
+            "schema_version": "live-ais-contract-v1",
+            "provider_message_type": "TEST POSITION",
+            "source_event_id": "test-event-0001",
+            "ingested_at": "2026-09-20T12:00:01Z",
+            "normalized_at": "2026-09-20T12:00:01.020Z",
+            "source_state": "LIVE",
+            "cache_age_seconds": null
+          }
+        }
+      ],
+      "truncated": false
+    },
+    {
+      "protocol_version": "1.0",
+      "event": "stream.status",
+      "stream_epoch": "11111111-1111-4111-8111-111111111111",
+      "sequence": 1,
+      "emitted_at": "2026-09-20T12:00:03Z",
+      "connection_state": "CONNECTED",
+      "source_state": "LIVE",
+      "cache_age_seconds": null,
+      "availability": "AVAILABLE",
+      "coverage": {
+        "state": "COVERED",
+        "description": "TEST DATA bounded contract region.",
+        "bounds": {
+          "west": -75.0,
+          "south": 40.0,
+          "east": -73.0,
+          "north": 42.0
+        },
+        "effective_at": "2026-09-20T12:00:00Z"
+      },
+      "last_observation_at": "2026-09-20T12:00:00Z",
+      "retry_at": null,
+      "detail": "TEST DATA stream connected."
+    },
+    {
+      "protocol_version": "1.0",
+      "event": "vessel.position",
+      "stream_epoch": "11111111-1111-4111-8111-111111111111",
+      "sequence": 2,
+      "emitted_at": "2026-09-20T12:00:07Z",
+      "position": {
+        "observation_id": "test:position:0002",
+        "mmsi": "999000001",
+        "observed_at": "2026-09-20T12:00:05Z",
+        "longitude": -73.99,
+        "latitude": 40.71,
+        "speed_over_ground_knots": null,
+        "course_over_ground_deg": null,
+        "true_heading_deg": null,
+        "navigational_status_code": null,
+        "quality_flags": ["TEST DATA", "nullable-dynamic-fields"],
+        "provenance": {
+          "source_slug": "test-provider",
+          "source_url": "https://example.test/live-ais",
+          "attribution_text": "TEST DATA only",
+          "data_version": "test-data-v1",
+          "schema_version": "live-ais-contract-v1",
+          "provider_message_type": "TEST POSITION",
+          "source_event_id": "test-event-0002",
+          "ingested_at": "2026-09-20T12:00:06Z",
+          "normalized_at": "2026-09-20T12:00:06.020Z",
+          "source_state": "LIVE",
+          "cache_age_seconds": null
+        }
+      }
+    },
+    {
+      "protocol_version": "1.0",
+      "event": "stream.gap",
+      "stream_epoch": "11111111-1111-4111-8111-111111111111",
+      "sequence": 3,
+      "emitted_at": "2026-09-20T12:00:40Z",
+      "gap_started_at": "2026-09-20T12:00:08Z",
+      "gap_ended_at": "2026-09-20T12:00:38Z",
+      "reason": "provider_disconnect",
+      "dropped_updates": null,
+      "replay_available": false,
+      "detail": "TEST DATA continuity gap; a new snapshot is required."
+    }
+  ]
+}

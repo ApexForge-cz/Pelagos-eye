@@ -177,6 +177,9 @@ and after source, architecture, team, or deployment changes.
 - R-03 and R-09 remain hard entry gates. The official terms page and its source rendered
   only garbled text in the human browser, so public display, caching, storage, retention,
   commercial use, redistribution, and attribution rights remain unverified.
+- Written clarification is now tracked in official AISStream issue #298. Opening the
+  request is evidence of escalation, not a grant; R-03 and R-09 remain blocking until
+  the provider supplies an applicable, authoritative answer.
 
 ## Review protocol
 

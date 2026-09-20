@@ -59,6 +59,18 @@ human browser. The rendered page and `view-source:` view both contained only one
 line of garbled text. This independently confirms that the current rights terms cannot
 be reviewed from that endpoint; it does not imply permission.
 
+## Written clarification request - 2026-09-20
+
+The owner submitted [AISStream issue #298](https://github.com/aisstream/issues/issues/298)
+through the provider's official issue channel. It asks about non-commercial public
+display, caching and storage, retention, normalized positions and recent tracks,
+commercial use, attribution, redistribution, derived GeoJSON/API output, and the current
+applicable terms and effective date.
+
+The request was open with no provider answer when recorded. Submission of a request is
+not permission; R-03 and R-09 remain blocking until an authorized provider response or
+readable applicable terms answer the outstanding questions.
+
 ## Historical rights evidence and its limit
 
 In official issue [#25](https://github.com/aisstream/issues/issues/25), an AISStream
@@ -98,5 +110,5 @@ is design evidence only.
 
 ## Safe next action
 
-Request written clarification from the provider for questions 1-5 and 7, including the
-applicable terms URL or effective date. Do **not** send or record an API key or token.
+Monitor provider issue #298 for an authorized response to questions 1-5 and 7, including
+the applicable terms URL or effective date. Do **not** send or record an API key or token.

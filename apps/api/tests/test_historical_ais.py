@@ -187,6 +187,30 @@ def test_parser_accepts_current_snake_case_bulk_schema(tmp_path: Path) -> None:
     assert parsed.records[0].transceiver_class == "A"
 
 
+def test_parser_rejects_invalid_mmsi_and_nulls_invalid_optional_values(tmp_path: Path) -> None:
+    content = compressed_csv(
+        [
+            row(MMSI="123"),
+            row(MMSI="223456789", SOG="not-a-number", Status="not-an-enum"),
+        ]
+    )
+
+    parsed = MarineCadastreCsvParser().parse(archive(tmp_path, content, request()))
+
+    assert parsed.records_received == 2
+    assert parsed.records_rejected == 1
+    assert len(parsed.records) == 1
+    assert parsed.quality_counts == {
+        "missing_required": 1,
+        "out_of_range": 1,
+        "unknown_enum": 1,
+    }
+    assert parsed.records[0].mmsi == "223456789"
+    assert parsed.records[0].sog_knots is None
+    assert parsed.records[0].navigation_status is None
+    assert parsed.records[0].quality_flags == ("out_of_range", "unknown_enum")
+
+
 def test_provider_constructs_only_verified_daily_archive_url(tmp_path: Path) -> None:
     content = compressed_csv([row()])
 

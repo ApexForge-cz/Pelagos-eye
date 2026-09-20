@@ -4,8 +4,11 @@ from collections import defaultdict
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from oceanscope_api.core.errors import DatabaseUnavailableError
+from oceanscope_api.db.session import get_engine
 from oceanscope_api.provenance.models import DataSource, IngestionRun, QualityIssue, SourceVersion
 from oceanscope_api.status.contracts import (
     IngestionRunSnapshot,
@@ -110,3 +113,16 @@ class SqlAlchemySourceStatusRepository:
             )
             for source in sources
         ]
+
+
+class ManagedSqlAlchemySourceStatusRepository:
+    """Open a short-lived session so system health can report database outages."""
+
+    def list_source_histories(self) -> list[SourceHistory]:
+        try:
+            with Session(get_engine()) as session:
+                return SqlAlchemySourceStatusRepository(session).list_source_histories()
+        except DatabaseUnavailableError:
+            raise
+        except SQLAlchemyError as error:
+            raise DatabaseUnavailableError("database status query failed") from error

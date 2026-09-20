@@ -103,9 +103,24 @@ class SystemDependencyStatus:
 
 
 @dataclass(frozen=True)
+class SystemProviderStatus:
+    slug: str
+    display_name: str
+    state: Literal["LIVE", "CACHED", "DELAYED", "OFFLINE"]
+    availability: Literal["AVAILABLE", "DATA UNAVAILABLE"]
+    cache_age_seconds: int | None
+    freshness: FreshnessSnapshot
+    source_published_at: datetime | None
+    source_retrieved_at: datetime | None
+    latest_run: IngestionRunSnapshot | None
+
+
+@dataclass(frozen=True)
 class SystemStatus:
     service: Literal["oceanscope-api"]
     version: str
     overall_state: Literal["READY", "DEGRADED"]
     checked_at: datetime
     database: SystemDependencyStatus
+    redis: SystemDependencyStatus
+    providers: tuple[SystemProviderStatus, ...]

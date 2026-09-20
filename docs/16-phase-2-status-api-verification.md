@@ -18,10 +18,21 @@ attempt fails after an older successful import, the source reports `CACHED` with
 while that version remains inside the approved stale window. Expired data becomes
 `OFFLINE` / `DATA UNAVAILABLE`.
 
-`GET /system/status` returns the application version and database probe result. A missing
-or unreachable database produces `DEGRADED`, database `OFFLINE`, and `DATA UNAVAILABLE`.
-Database-backed `/data/sources` requests instead return a stable 503
-`application/problem+json` response without leaking connection details.
+`GET /system/status` returns the application version, PostGIS and Redis probe results,
+and a summary for every registered provider. Each provider summary includes its computed
+state and availability, freshness thresholds and age, cache age, source publication and
+retrieval time, and latest ingestion run with UTC times and record counts. A missing or
+unreachable PostGIS or Redis dependency produces `DEGRADED`, dependency `OFFLINE`, and
+`DATA UNAVAILABLE`; Redis failure does not create substitute data or prevent the endpoint
+from reporting PostGIS-backed provider state. Database-backed `/data/sources` requests
+instead return a stable 503 `application/problem+json` response without leaking connection
+details.
+
+Provider state is derived from verified stored ingestion evidence and source-specific
+freshness policy. It is not an active upstream request on every health check. An empty
+provider list with PostGIS `LIVE` means the source catalog is empty; PostGIS `OFFLINE`
+means provider status is `DATA UNAVAILABLE`. `NO COVERAGE` is a record-query outcome and
+is not used as a health state.
 
 ## Evidence
 
@@ -47,9 +58,11 @@ history, and a failed latest run with an older usable version. All fixtures are 
 The original verification predated the explicit freshness policy. The policy extension and
 its current validation evidence are recorded in
 `docs/24-phase-2-freshness-cache-policy-verification.md`.
+Redis and provider/latest-run health hardening is recorded in
+`docs/27-phase-2-system-health-hardening-verification.md`.
 
 ## Remaining boundary
 
 The API exposes source metadata and does not bypass record-level redistribution gates.
 WPI redistribution remains `unreviewed`; MarineCadastre record redistribution remains
-`restricted`. Scheduled ingestion and active provider probes remain separate work.
+`restricted`. Scheduled ingestion and active upstream provider probes remain separate work.

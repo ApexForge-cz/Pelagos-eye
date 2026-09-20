@@ -32,8 +32,18 @@ verification limits in `docs/33-aisstream-provider-verification.md`.
   `deflate` compression and handles provider messages as UTF-8 JSON payloads.
 - The official message-model repository defines the subscription envelope and common
   position/static-data message types.
+- A human browser review of the official `documentation#limits` page on 2026-09-20
+  confirmed three subscribed connections per account, three open connections per
+  originating IP before authentication, an initial subscription within three seconds,
+  at most one subscription replacement per connection per second, and at most 200
+  nine-character MMSI values per subscription. A replacement supersedes rather than
+  merges with the previous subscription.
+- The same page requires continuous reads and warns that buffered messages may be
+  discarded when a client does not consume them quickly enough. It also states that,
+  starting September 2026, uncompressed connections are subject to per-user bandwidth
+  limits and excess messages are dropped.
 - Historical planning notes recorded no SLA and no durable replay; these are not a
-  current terms certification. See the pinned revisions and Cloudflare limitation in
+  current terms certification. See the pinned revisions and website limitations in
   `docs/33-aisstream-provider-verification.md`.
 - The backend must keep any API key server-side. Direct browser use and production
   proxying remain unauthorized until current terms are reviewed.

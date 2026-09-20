@@ -162,6 +162,22 @@ and after source, architecture, team, or deployment changes.
   adapter, live connection, API key, raw fixture, route, worker, or public live-data
   claim until the current terms are archived and the source gate is approved.
 
+## Phase 4 browser verification follow-up - 2026-09-20
+
+- R-02 is no longer blocked on discovering the published limits. A human browser review
+  confirmed three subscribed connections per account, three pre-authentication open
+  connections per originating IP, a three-second initial-subscription deadline, one
+  replacement per connection per second, and 200 MMSI values per subscription. Runtime
+  enforcement, continuous-read behavior, compression, queue bounds, and load evidence
+  remain required controls.
+- The documentation warns that slow consumers can lose buffered messages and that, from
+  September 2026, uncompressed connections are bandwidth-limited per user with excess
+  messages dropped. R-15 and R-16 therefore remain active and require explicit gap
+  events; no completeness claim is permitted.
+- R-03 and R-09 remain hard entry gates. The official terms page and its source rendered
+  only garbled text in the human browser, so public display, caching, storage, retention,
+  commercial use, redistribution, and attribution rights remain unverified.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

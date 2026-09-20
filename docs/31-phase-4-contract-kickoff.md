@@ -79,6 +79,11 @@ Phase 4 implementation must not begin until the owner records and approves all o
 5. Reconnect/backoff, queue limits, coalescing, slow-client behavior, and gap metrics are set.
 6. Developer A and B issue scopes, allowed paths, review order, and acceptance evidence are set.
 
+The owner-approved planning values for gates 3-5 are recorded in
+`docs/34-phase-4-bounded-operating-policy.md`. They do not open implementation: gate 1
+remains blocked on authoritative provider rights, gate 2 has no verified credential, and
+the proposed operating ceilings still require load evidence.
+
 ## Proposed implementation order after authorization
 
 1. Developer B verifies the provider and submits a source/terms record plus a contract mapping.

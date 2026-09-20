@@ -181,6 +181,24 @@ and after source, architecture, team, or deployment changes.
   request is evidence of escalation, not a grant; R-03 and R-09 remain blocking until
   the provider supplies an applicable, authoritative answer.
 
+## Phase 4 bounded operating policy - 2026-09-20
+
+- R-02 and R-06 now have an owner-approved planning boundary: one fixed New York Harbor
+  box, `PositionReport` only, one backend provider connection, zero persistent live AIS
+  storage, no track tails, and explicit queue/state/client ceilings. These controls still
+  require load evidence and do not authorize provider access.
+- R-10 is bounded by a five-minute in-memory latest-position expiry and explicit cache age.
+  This cache remains disabled unless provider rights permit it; otherwise the design must
+  be revised rather than serving unlabeled or unauthorized stale data.
+- R-15 and R-16 now have proposed reconnect, epoch, snapshot, bounded-queue, coalescing,
+  slow-client, and gap behavior. Overflow cannot be silent, replay remains unavailable,
+  and positions cannot be interpolated across gaps.
+- R-19 retains a zero-trust credential boundary: one server-only secret path, no browser
+  provider access, and no raw payload or credential values in logs, metrics, fixtures, or
+  public events.
+- R-03 and R-09 remain hard blockers through official AISStream issue #298. The approved
+  scope and budgets are planning decisions, not permission or Phase 4 completion evidence.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

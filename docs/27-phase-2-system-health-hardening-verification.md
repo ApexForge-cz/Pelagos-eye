@@ -67,3 +67,25 @@ worker queue that does not yet exist, or convert `NO COVERAGE` into a source sta
 fresh Compose database intentionally contained no imported provider records; provider and
 latest-ingestion fields remain covered by the focused service and API tests rather than by
 fabricated integration data.
+
+## Bounded-query follow-up - 2026-09-20
+
+Bugbot review after merge found that the first implementation reused the full-history
+source repository for `/system/status`. The API response was bounded, but each health
+request still loaded every source version, ingestion run, and quality issue before the
+service selected current values.
+
+Issue #32 replaces that path with a dedicated summary repository. For each registered
+source, correlated indexed `LIMIT 1` subqueries select the latest run and latest usable
+run; only the usable run's referenced source version is then loaded. Quality issues are
+not part of the system-health response and are not queried. The `/data/sources` endpoint
+retains its existing full-history behavior and quality findings. A scale-oriented SQLite
+repository test inserts 100 obsolete runs and issues, verifies the summary returns only
+two runs and one version with no quality payload, and verifies the read path remains four
+SQL statements. No schema migration or API response change is required.
+
+Local follow-up verification passed Ruff format/lint across 94 files, strict mypy across
+86 source files, 12 focused status repository/service/Redis tests, and 101 non-ASGI
+backend tests with the existing PostGIS migration test skipped because no disposable
+database URL was configured. Linux CI remains responsible for the full ASGI and PostGIS
+suite plus the repository secret scan.

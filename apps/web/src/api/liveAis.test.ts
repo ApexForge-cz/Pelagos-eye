@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import sharedFixture from '../../../../test-fixtures/live-ais/v1-server-events.json'
+
 import { hasSupportedLiveAisEnvelope } from './liveAis'
 
 describe('hasSupportedLiveAisEnvelope', () => {
@@ -13,6 +15,23 @@ describe('hasSupportedLiveAisEnvelope', () => {
 
   it('recognizes the frozen v1 envelope', () => {
     expect(hasSupportedLiveAisEnvelope(envelope)).toBe(true)
+  })
+
+  it('recognizes every shared TEST DATA v1 event envelope', () => {
+    const fixture: unknown = sharedFixture
+    expect(fixture).toMatchObject({ fixture_label: 'TEST DATA' })
+    expect(fixture).toHaveProperty('events')
+
+    const events = (fixture as { events: unknown }).events
+    expect(Array.isArray(events)).toBe(true)
+    if (!Array.isArray(events)) throw new TypeError('shared live AIS events must be an array')
+
+    expect(events.map((event) => hasSupportedLiveAisEnvelope(event))).toEqual([
+      true,
+      true,
+      true,
+      true,
+    ])
   })
 
   it('rejects unsupported versions and event names', () => {

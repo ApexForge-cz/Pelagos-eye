@@ -3,7 +3,7 @@
 **Status:** Contract proposal verified locally. Phase 4 remains `Planned`; no provider,
 route, WebSocket, storage, vessel UI, or live-data claim is accepted by this record.
 
-**Date:** 2026-09-19
+**Date:** 2026-09-19; cross-language fixture update verified 2026-09-20
 
 ## Verified surface
 
@@ -21,6 +21,9 @@ route, WebSocket, storage, vessel UI, or live-data claim is accepted by this rec
   provenance, merge, and conflict semantics have not been reviewed.
 - The TypeScript mirror builds under strict project settings, and its shallow envelope check
   returns only a boolean rather than claiming full runtime payload validation.
+- `test-fixtures/live-ais/v1-server-events.json` is the shared provider-neutral `TEST DATA`
+  set for all four v1 discriminators. Python fully validates each payload through Pydantic;
+  TypeScript consumes the same file and recognizes each frozen v1 envelope.
 
 ## Commands and results
 
@@ -28,10 +31,10 @@ route, WebSocket, storage, vessel UI, or live-data claim is accepted by this rec
 | --- | --- |
 | Backend Ruff format and lint across `apps/api` | Passed; 91 files formatted, no lint findings. |
 | Backend strict mypy across `src` and `tests` | Passed; 83 source files checked. |
-| Focused contract tests | Passed; 11 tests. |
-| Backend non-ASGI suite with repository-local pytest temp directory | Passed; 93 tests, 1 PostGIS migration test skipped. |
+| Focused backend contract tests | Passed; 12 tests. |
+| Backend non-ASGI suite with repository-local pytest temp directory | Passed; 94 tests, 1 PostGIS migration test skipped. |
 | Frontend Prettier and ESLint | Passed. |
-| Frontend Vitest | Passed; 8 tests in 3 files. |
+| Frontend Vitest | Passed; 9 tests in 3 files. |
 | Frontend TypeScript and production Vite build | Passed. |
 | `git diff --check` | Passed. |
 | Manual changed-code credential pattern review | No credential values found. |
@@ -40,7 +43,7 @@ The non-ASGI backend run used:
 
 ```text
 pytest --ignore=tests/test_health.py --ignore=tests/test_status_api.py \
-  --basetemp=../../tmp/pytest-phase4-contract-20260919b --cov --cov-report=term-missing
+  --basetemp=../../tmp/pytest-phase4-fixtures-20260920 --cov --cov-report=term-missing
 ```
 
 ## Remaining limitations and gates
@@ -53,9 +56,13 @@ pytest --ignore=tests/test_health.py --ignore=tests/test_status_api.py \
   required before merge.
 - The production build retains the existing warning for chunks above 500 kB. This contract
   adds no runtime import or bundle dependency.
-- GitHub issue/PR lookup was unavailable because `gh` is not authenticated in this workspace.
-- Provider documentation, terms, credentials, schema, demo scope, retention, queue budgets,
-  reconnect behavior, and load/soak evidence are deliberately unverified. They remain Phase 4
-  implementation entry gates listed in `docs/31-phase-4-contract-kickoff.md`.
+- Issue #28 tracks the shared-fixture increment. Provider-rights issue #24 remains open and
+  continues to block provider implementation.
+- Current operating limits are recorded in `docs/33-aisstream-provider-verification.md`.
+  Applicable rights, credentials, live schema mapping, demo scope, retention, queue budgets,
+  reconnect behavior, and load/soak evidence remain Phase 4 implementation entry gates listed
+  in `docs/31-phase-4-contract-kickoff.md`.
 - No browser or screenshot check was needed because this change does not register or render a
   user-facing surface.
+- The shared fixtures contain fixed, provider-neutral `TEST DATA` only. They neither reproduce
+  provider records nor authorize a provider, route, storage, or production-data integration.

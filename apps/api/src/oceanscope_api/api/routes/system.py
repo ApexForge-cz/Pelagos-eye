@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict
 
 from oceanscope_api.db.session import database_is_available
 from oceanscope_api.status.redis import redis_is_available
-from oceanscope_api.status.repository import ManagedSqlAlchemySourceStatusRepository
+from oceanscope_api.status.repository import ManagedSqlAlchemySourceStatusSummaryRepository
 from oceanscope_api.status.service import SourceStatusService, SystemStatusService
 
 router = APIRouter(prefix="/system", tags=["system"])
@@ -70,7 +70,7 @@ class SystemStatusResponse(BaseModel):
 
 
 def get_system_status_service() -> SystemStatusService:
-    source_statuses = SourceStatusService(ManagedSqlAlchemySourceStatusRepository())
+    source_statuses = SourceStatusService(ManagedSqlAlchemySourceStatusSummaryRepository())
     return SystemStatusService(
         database_is_available,
         redis_is_available,

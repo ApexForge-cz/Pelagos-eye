@@ -8,7 +8,7 @@ and after source, architecture, team, or deployment changes.
 | ID | Risk | Likelihood | Impact | Early indicator | Mitigation | Contingency |
 | --- | --- | --- | --- | --- | --- | --- |
 | R-01 | AIS provider unavailable | High | High | disconnects, no messages, provider health failure | supervised connection, backoff/jitter, bounded subscription, health metrics, persisted required observations | label cache/gap; show unavailable; disable live layer |
-| R-02 | AIS rate/connection limits exceeded | Medium | High | rejected fourth connection, frequent subscription close | centralize backend connection, respect three-connection and update limits, multiplex clients | narrow scope; queue subscription changes; reduce regions |
+| R-02 | AIS rate/connection limits exceeded | Medium | High | rejected third connection, subscription close, changed `welcome.limits` | centralize one backend connection, enforce effective runtime limits, multiplex bounded clients | narrow scope; stop subscription changes; reduce clients/regions |
 | R-03 | AIS pricing/terms change or use rights unclear | Medium | High | provider notice, unclear redistribution language | archive/review terms before integration/release; provider abstraction; minimize raw redistribution | pause affected feature; replace provider after review |
 | R-04 | External API outage | High | Medium | timeouts/error-rate spike | provider-specific timeouts, retries, circuits, cache, isolated modules | serve labeled cache within TTL; `DATA UNAVAILABLE` |
 | R-05 | Unexpected API costs | Medium | High | quota/budget alert | call accounting, caching, budgets, hard quotas, non-commercial/commercial decision | degrade polling/layers; disable source before overrun |
@@ -49,7 +49,7 @@ and after source, architecture, team, or deployment changes.
 
 ## Top risks before Phase 1
 
-1. Confirm AISStream terms for public display, caching, retention, and redistribution.
+1. Verify a self-service Pelyr key, effective limits, source directory, attribution, and bounded coverage without recording the secret or raw payloads.
 2. Select a bounded live geography and raw AIS retention policy.
 3. Decide whether the public deployment is commercial; Open-Meteo free use is non-commercial.
 4. Set a monthly hosting/storage budget ceiling.
@@ -198,6 +198,29 @@ and after source, architecture, team, or deployment changes.
   public events.
 - R-03 and R-09 remain hard blockers through official AISStream issue #298. The approved
   scope and budgets are planning decisions, not permission or Phase 4 completion evidence.
+
+## Phase 4 provider replacement review - 2026-09-22
+
+- R-03 and R-09 are reduced by the recorded Pelyr API Terms 1.5 and Pelyr Data Licence
+  1.1. Bounded in-product display, storage, analysis, derived results, and commercial use
+  are permitted with visible source-specific attribution. Pelyr-licensed position data may
+  not be redistributed, exported, relayed, or offered through a data API.
+- R-01 remains high because Pelyr is a private pilot with no SLA, global-coverage promise,
+  or continuity guarantee. Fintraffic and Norwegian open AIS are candidates for separately
+  reviewed direct-source fallback adapters; provider abstraction and `DATA UNAVAILABLE`
+  behavior remain mandatory.
+- R-02 now uses the effective `/v1` `welcome.limits` values rather than hard-coded
+  AISStream limits. The first slice uses one connection and one fixed Gulf of Finland box.
+- R-09 requires dynamic provenance. Every provider frame's licence id must resolve against
+  the connection's source directory, and every represented attribution must remain visible.
+  An unknown id stops publication and forces a source-directory refresh/reconnect.
+- R-15 and R-16 use Pelyr heartbeats and loss counters as upstream evidence, while retaining
+  OceanScope epoch, sequence, bounded queues, gap events, coalescing, and slow-client rules.
+- R-19 applies to the self-service Pelyr key: it remains server-only and must not appear in
+  URLs, browser code, logs, fixtures, screenshots, documents, or Git history.
+- R-03, R-09, and R-19 still block implementation until Developer A completes a no-payload
+  credential smoke check and accepts the effective limits, source directory, attribution,
+  observed coverage, and same-origin anti-extraction controls. Phase 4 remains `Planned`.
 
 ## Review protocol
 

@@ -1,38 +1,42 @@
 # Phase 4 bounded Live AIS operating policy
 
-**Status:** Owner-approved planning boundary. Implementation remains blocked.
+**Status:** Owner-approved revised planning boundary. Implementation remains blocked on
+self-service credential evidence and an issue-scoped Phase 4 authorization.
 
-**Date:** 2026-09-20
+**Date:** 2026-09-20; provider/scope revision 2026-09-22
 
-**Tracking issue:** [#30](https://github.com/ApexForge-cz/Pelagos-eye/issues/30)
+**Original policy issue:** [#30](https://github.com/ApexForge-cz/Pelagos-eye/issues/30)
+
+**Revised provider gate:** [#37](https://github.com/ApexForge-cz/Pelagos-eye/issues/37)
 
 ## Decision
 
-The first Live AIS slice is restricted to one fixed New York Harbor subscription and
-position reports only. It uses one centralized backend provider connection, keeps no raw
-messages, stores no track tails, and writes no live AIS data to Redis, PostGIS, files,
-backups, or analytics storage.
+The first Live AIS slice is restricted to one fixed Gulf of Finland subscription and
+Pelyr `/v1` position frames only. It uses one centralized backend provider connection,
+keeps no raw messages, stores no track tails, and writes no live AIS data to Redis,
+PostGIS, files, backups, or analytics storage.
 
-This policy does not authorize an AISStream connection. Provider-rights issue
-[#298](https://github.com/aisstream/issues/issues/298) and project gate
-[#24](https://github.com/ApexForge-cz/Pelagos-eye/issues/24) remain open. If the provider
-does not permit the display and bounded in-memory handling below, the slice remains
-disabled.
+The reviewed Pelyr terms permit bounded in-product display and in-memory handling when
+source-specific attribution and anti-extraction restrictions are enforced. This policy does
+not authorize a connection by itself: a self-service key, key-backed `/v1` welcome/source
+directory/coverage smoke check, and an implementation issue approved by Developer A are
+still required. AISStream issue #298 remains historical follow-up, not a Phase 4 dependency.
 
 ## Fixed subscription
 
 | Item | Approved first-slice value |
 | --- | --- |
-| Region | New York Harbor pilot box |
+| Region | Gulf of Finland pilot box |
 | CRS | WGS 84 (`EPSG:4326`) at the application boundary |
-| West | `-74.15` |
-| South | `40.48` |
-| East | `-73.75` |
-| North | `40.85` |
-| Provider message types | `PositionReport` only |
+| West | `23.50` |
+| South | `59.50` |
+| East | `26.50` |
+| North | `60.50` |
+| Provider selection | Pelyr `/v1`, `fields = "position"` only |
 | Provider connections | One authenticated backend connection |
 | Subscription changes | Disabled for the first slice |
 | Browser provider access | Prohibited |
+| Product data export/API | Prohibited; same-origin UI transport only |
 
 The box is the configured subscription extent, not proof of receiver coverage, complete
 vessel reporting, or global availability. Inside the configured and active subscription,
@@ -41,8 +45,10 @@ the client contract may report `COVERED`; outside it, the first slice reports
 not that no vessels exist. Provider failure remains `DATA UNAVAILABLE` or an explicitly
 age-labeled cache within the approved window.
 
-Provider-specific latitude/longitude array ordering stays inside the future adapter. The
-public contract and spatial checks continue to use named west/south/east/north fields.
+Pelyr `/v1` already uses named west/south/east/north fields. The public contract and
+spatial checks retain the same WGS 84 representation. The box is selected because Pelyr
+declares Fintraffic as an upstream source; it becomes `COVERED` only after the key-backed
+check confirms effective access and current observations or provider coverage evidence.
 
 ## Retention and deletion
 
@@ -57,10 +63,10 @@ public contract and spatial checks continue to use named west/south/east/north f
 | Redis/PostGIS/files/backups | Zero live AIS records in the first slice |
 | Process shutdown | Purge all in-memory latest positions and queues |
 
-The persistent live AIS storage budget is therefore zero bytes. The provisional in-memory
-latest-state window is still a form of caching and may be enabled only if the provider
-confirms it is permitted. If display is allowed but caching is not, the first slice must
-be redesigned and reapproved rather than silently weakening this policy.
+The persistent live AIS storage budget is therefore zero bytes. Pelyr Data Licence 1.1
+permits storage, but the first slice deliberately retains the more conservative
+zero-persistence boundary. Source licence ids and attribution remain attached to every
+in-memory observation and are discarded with it.
 
 No migration is authorized. A future retention or track feature requires a separate
 terms review, data model, storage budget, deletion test, migration review, and issue.
@@ -86,15 +92,16 @@ No capacity or completeness claim follows from the proposed numbers.
 
 ## Continuity and recovery
 
-- Submit the one fixed subscription within the provider's three-second deadline.
-- Negotiate compression and read continuously; an uncompressed connection is not accepted
-  for the first slice.
+- Validate the unprompted Pelyr `welcome` frame, its source directory and effective limits,
+  then submit the one fixed subscription within the advertised deadline (currently five seconds).
+- Read continuously and consume each 20-second heartbeat. A nonzero provider loss counter,
+  unknown licence id, or missing heartbeat is a continuity incident, not silent throttling.
 - Reconnect with capped exponential backoff using base delays of 1, 2, 4, 8, 16, and
   30 seconds plus bounded jitter. Reset the attempt count only after 60 seconds of stable
   connectivity.
 - Publish `CONNECTING`, `CONNECTED`, `RECONNECTING`, or `DISCONNECTED` independently of
   source freshness, availability, and coverage.
-- A provider reconnect creates a new `stream_epoch`. Every provider, server-queue,
+- A provider reconnect or changed source directory creates a new `stream_epoch`. Every provider, server-queue,
   client-queue, or subscription continuity break emits `stream.gap` with
   `replay_available = false` and requires a new snapshot.
 - Planned same-MMSI coalescing happens before public sequence assignment and is counted.
@@ -109,23 +116,25 @@ The future implementation must expose bounded-cardinality metrics for connection
 reconnect attempts, messages received/accepted/rejected, last observation time, queue
 depth/high-water mark, coalesced and dropped updates, gaps by reason, snapshot size and
 truncation, connected clients, and slow-client disconnects. Metrics and logs must not use
-MMSI, coordinates, raw payloads, or credentials as labels or values.
+MMSI, coordinates, raw payloads, credentials, or full provider frames as labels or values.
 
 ## Ownership and implementation gate
 
-Developer B retains provider mapping, connection supervision, normalization, latest-state
-handling, fan-out, telemetry, load tests, and backend failure tests. Developer A retains
-the public contract, source/coverage presentation, frontend state handling, map experience,
-integration acceptance, and final migration review. This policy does not transfer stable
-modules or authorize either owner to implement before the gate is opened.
+Developer B retains provider and licence mapping, connection supervision, normalization,
+latest-state handling, fan-out, telemetry, load tests, and backend failure tests. Developer A
+retains the public contract, source/coverage/attribution presentation, frontend state handling,
+same-origin anti-extraction boundary, map experience, integration acceptance, and final
+migration review. This policy does not transfer stable modules or authorize either owner to
+implement before the gate is opened.
 
 | Entry gate | Status after this decision |
 | --- | --- |
-| Current terms and display/cache/retention/attribution rights | **Blocked:** awaiting official issue #298 |
-| Server-only credential path | Policy defined; no credential is requested, stored, or verified |
-| Geography, bounds, message types, and coverage wording | **Approved for planning** |
-| Raw/normalized retention, deletion, and storage budget | **Approved for planning**, conditional on provider rights |
+| Current terms and display/cache/retention/attribution rights | **Recorded:** Pelyr API Terms 1.5 and Data Licence 1.1; per-source runtime attribution required |
+| Server-only credential path and live smoke check | **Blocked:** self-service key not yet created or verified |
+| Geography, bounds, position fields, and coverage wording | **Approved for planning; live coverage evidence pending** |
+| Raw/normalized retention, deletion, and storage budget | **Approved for planning:** zero persistent live-AIS storage |
 | Reconnect, queue, coalescing, slow-client, and gap policy | Initial proposal frozen; load evidence still required |
-| Implementation issues and owner reviews | Not opened; create only after the rights gate passes |
+| Same-origin anti-extraction and dynamic attribution behavior | **Approved for planning; implementation tests pending** |
+| Implementation issues and owner reviews | Not opened; create only after the credential smoke gate passes |
 
 Phase 4 remains `Planned`. No live AIS capability is implemented or claimed.

@@ -16,7 +16,7 @@ Users
           -> PostgreSQL + PostGIS
           -> Redis
           -> provider adapters
-              -> AISStream
+              -> Pelyr OPEN-AIS
               -> MarineCadastre
               -> UN/LOCODE
               -> NGA WPI
@@ -91,14 +91,19 @@ app shell and routing
 
 ### Live AIS
 
-1. Worker connects to AISStream with a server-side key and bounded subscription.
-2. Binary frame is decoded as UTF-8 JSON; envelope and message type are validated.
-3. Raw message metadata is assigned a deterministic event fingerprint where possible.
-4. Normalizer emits typed observations with quality flags and provenance.
-5. Durable write and latest-state update occur in controlled batches.
-6. Redis or in-process broadcaster carries a reduced client-safe event.
-7. Client gateway applies authorization/filtering, coalescing, and backpressure.
-8. Health records connection state, message lag, dropped/coalesced counts, and last success.
+1. Worker connects to Pelyr `/v1` with a server-side key and one bounded subscription.
+2. The `welcome` frame is validated and its effective limits, source directory, licence ids,
+   and attribution strings are frozen for that connection epoch.
+3. Position and heartbeat frames are decoded; unknown licence ids, upstream loss counters,
+   and reconnects become explicit provenance or continuity failures.
+4. Normalizer emits typed observations with quality flags and source-level provenance.
+5. The first slice updates bounded in-memory latest state only; durable live-AIS writes stay
+   disabled until a later retention and migration decision.
+6. An in-process broadcaster carries a reduced client-safe event for the product UI.
+7. The same-origin client gateway applies origin checks, fixed bounds, quotas, coalescing,
+   backpressure, and anti-extraction controls; it is not a public vessel-data API.
+8. Health records connection state, message lag, upstream/client loss, dropped/coalesced
+   counts, current source-directory version, and last success.
 
 ### Historical AIS
 

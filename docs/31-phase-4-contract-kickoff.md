@@ -26,7 +26,7 @@ Included:
 
 Excluded:
 
-- AISStream account use, provider code, live network calls, secrets, and raw message fixtures;
+- Pelyr account use, provider code, live network calls, secrets, and raw message fixtures;
 - FastAPI routes, WebSocket handlers, Redis/PostGIS changes, Alembic migrations, and retention;
 - vessel search, recent tracks, map layers, detail panels, follow mode, or production UI;
 - test vessel generation outside test-only contract payloads; and
@@ -57,10 +57,11 @@ three cases.
 ## Ownership and integration boundary
 
 Developer A owns the public contract, frontend adapter, vessel/map experience, connection and
-coverage presentation, accessibility, and integration acceptance. Developer B retains the
-AISStream adapter, worker supervision, validation/normalization/deduplication, Redis/PostGIS,
-recent-track/search backend, gateway backpressure, health telemetry, and provider/backend
-tests. Existing stable modules do not move.
+coverage presentation, accessibility, anti-extraction product boundary, and integration
+acceptance. Developer B retains the Pelyr adapter, source/licence mapping, worker supervision,
+validation/normalization/deduplication, bounded latest state, gateway backpressure, health
+telemetry, and provider/backend tests. Existing stable modules do not move. Redis/PostGIS,
+recent tracks, export, and a public vessel-data API are outside the first slice.
 
 The public contract is provider-neutral. Developer B may propose source-specific additions,
 but raw provider dictionaries do not enter API routes or frontend types. Contract changes are
@@ -71,27 +72,31 @@ resulting Alembic migration.
 
 Phase 4 implementation must not begin until the owner records and approves all of the following:
 
-1. Current AISStream documentation and applicable terms are reverified, including public
-   display, caching, retention, redistribution, connection limits, and attribution.
-2. A server-only account/key path is available and secret-scanning controls are confirmed.
-3. The first demo geography, subscription bounds, message types, and coverage wording are set.
+1. Current Pelyr documentation, API terms, data licence, mixed-source attribution, display,
+   retention, redistribution, connection limits, and anti-extraction requirements are recorded.
+2. A self-service server-only account/key path is available, effective `/v1` limits and source
+   metadata are captured without secrets/raw payloads, and secret-scanning controls are confirmed.
+3. The first demo geography, subscription bounds, position-only fields, and coverage wording are set.
 4. Raw and normalized retention, storage budget, deletion behavior, and migration owner are set.
 5. Reconnect/backoff, queue limits, coalescing, slow-client behavior, and gap metrics are set.
 6. Developer A and B issue scopes, allowed paths, review order, and acceptance evidence are set.
 
 The owner-approved planning values for gates 3-5 are recorded in
-`docs/34-phase-4-bounded-operating-policy.md`. They do not open implementation: gate 1
-remains blocked on authoritative provider rights, gate 2 has no verified credential, and
-the proposed operating ceilings still require load evidence.
+`docs/34-phase-4-bounded-operating-policy.md`, and the provider evidence for gate 1 is in
+`docs/36-pelyr-live-ais-provider-verification.md`. They do not open implementation: gate 2
+has no verified credential/connectivity evidence, the effective runtime source directory and
+coverage are not captured, and the proposed operating ceilings still require load evidence.
 
 ## Proposed implementation order after authorization
 
-1. Developer B verifies the provider and submits a source/terms record plus a contract mapping.
+1. Developer A performs the no-payload credential smoke check and accepts the effective
+   limits, source directory, attribution duties, coverage, and implementation issue.
 2. The shared contract is accepted or revised; the cross-language fixtures remain authoritative.
 3. Developer B implements bounded ingestion and failure behavior behind the adapter boundary.
-4. Developer B implements latest state, persistence, gateway, and backend/load tests.
+4. Developer B implements bounded in-memory latest state, same-origin gateway, and backend/load tests.
 5. Developer A integrates snapshot/status/gap handling before rendering live positions.
-6. Developer A adds vessel layer/search/detail/follow with freshness and coverage beside values.
+6. Developer A adds the bounded vessel layer, selected-position detail, and follow mode with
+   freshness, source attribution, and coverage beside values. Search remains deferred.
 7. Both owners run disconnect, burst, stale-cache, no-coverage, and unavailable acceptance tests.
 
 ## Kickoff acceptance evidence
@@ -105,11 +110,12 @@ the proposed operating ceilings still require load evidence.
 
 ## Open decisions
 
-- Demo region and maximum subscription extent.
-- Provider terms/rights evidence date and approved public-display wording.
-- Raw/normalized retention and whether raw storage is permitted at all.
+- Key-backed effective limits, source directory, Gulf of Finland coverage, and latency evidence.
+- Whether the product client transport needs an authenticated session in addition to strict
+  same-origin checks, fixed bounds, quotas, and disabled exports.
+- Whether any later durable storage is worth a separate retention/migration proposal.
 - Snapshot limits, update coalescing interval, queue sizes, and latency/error budgets.
-- REST snapshot/search paths, WebSocket path, authentication, origin policy, and quotas.
+- Internal snapshot path, product WebSocket path, authentication, origin policy, and quotas.
 - Static identity/voyage observation shape, including independent observation time,
   provenance, conflict handling, and nullable provider sentinels.
 - Whether a later durable replay capability belongs in Phase 4 or remains historical analytics.

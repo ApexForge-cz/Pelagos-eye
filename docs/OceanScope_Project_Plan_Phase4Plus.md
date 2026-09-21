@@ -53,7 +53,7 @@
 
 | 增量                 | 负责人主线                                                        | 组员不变的依赖                                         | 验收门槛                                                 |
 | -------------------- | ----------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------- |
-| 4A Live AIS 体验层   | 船舶图层、搜索、详情、follow、轨迹尾迹、连接/缓存/离线状态        | AISStream worker、验证、去重、Redis/PostGIS、WebSocket | 真实消息可追溯；背压与断线状态明确；无假船               |
+| 4A Live AIS 体验层   | 有界船舶图层、详情、follow、来源/署名、连接/缓存/离线状态          | Pelyr `/v1` adapter、许可证映射、有界最新状态、WebSocket | 真实消息可追溯；背压与断线状态明确；无假船、无数据导出   |
 | 4B Command Center    | 视频式命令中心布局、主球体 + 2D overview + 左右信息栏 + 底部 dock | 后端查询与来源状态合同                                 | 桌面/平板响应式；无遮挡；键盘与 reduced-motion 通过      |
 | 5A 历史时空工作台    | 时间轴、播放/暂停、速度、范围选择、轨迹与密度联动                 | 归档导入、分区、轨迹分段、聚合                         | 显示采样、范围、分母、来源；已知数据集可复现             |
 | 6A 证据式风险中心    | 规则详情、证据时间线、地图高亮、人工复核状态                      | 确定性规则、事件存储、版本和重算                       | 每项指标显示规则/版本/窗口/证据；不得描述意图或犯罪      |
@@ -161,7 +161,7 @@
 
 - 现有基线：`README.md`、`docs/OceanScope_Project_Plan_v2.1.md`、`docs/06-development-roadmap.md`、`AGENTS.md`。
 - 视频输入：用户提供的 MP4，关键帧约每 10 秒抽取；分析结论只用于 UX/视觉需求，不用于生产数据。
-- 官方源与条款：AISStream、MarineCadastre AccessAIS、UN/LOCODE、NGA WPI、Open-Meteo Marine、USGS，沿用 v2.1 的核验记录。
+- 官方源与条款：Pelyr OPEN-AIS（混合 Fintraffic、BarentsWatch/Kystverket 与 Pelyr 许可数据）、MarineCadastre AccessAIS、UN/LOCODE、NGA WPI、Open-Meteo Marine、USGS；Pelyr 以 `docs/36-pelyr-live-ais-provider-verification.md` 为准，AISStream 仅保留历史候选记录。
 - 参考站点：`online.geovisearth.com/browser`，仅作为视觉与交互研究对象；正式接入需另行验证。
 - 本文件不改变项目的非导航、非碰撞避免、非应急调度和非监管定位。
 

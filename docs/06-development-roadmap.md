@@ -99,17 +99,17 @@ covered by the accepted globe and MapLibre adapter.
 
 **Objective:** Add resilient, backend-mediated live vessel awareness with honest continuity and bounded load.
 
-**Tasks:** Implement AISStream worker, subscription configuration, message normalization, persistence/retention, latest-vessel state, backend WebSocket fan-out, live map layers, vessel search/detail, reconnect behavior, backpressure, and health telemetry.
+**Tasks:** Implement the Pelyr `/v1` worker, fixed subscription configuration, per-message licence/provenance mapping, position normalization, bounded in-memory latest-vessel state, same-origin product WebSocket fan-out, live map layers, vessel detail, reconnect behavior, backpressure, anti-extraction controls, and health telemetry. Search, tracks, export, and durable retention remain separate decisions.
 
-**Technical work:** Binary-frame decoding, schema routing, batching, deduplication, spatial/time indexes, connection supervision, client event coalescing, viewport/MMSI filtering, replay-gap labeling, and load testing.
+**Technical work:** JSON frame validation, source/licence resolution, duplicate/stale-update handling, connection supervision, heartbeat/loss processing, client event coalescing, fixed-bound enforcement, replay-gap labeling, origin/rate controls, and load testing.
 
-**Files/modules expected:** `live_ais` worker/provider, vessel domain/repository/services/routes, WebSocket gateway, live/vessel frontend features, operational dashboards/runbooks.
+**Files/modules expected:** `live_ais` worker/provider and services, bounded in-memory latest state, same-origin WebSocket gateway, live/vessel frontend features, operational dashboards/runbooks. No repository or migration is required for the first slice.
 
-**Dependencies:** AISStream account/key and terms review; Phase 2 provenance/storage; Phase 3 renderer; retention and geographic-scope decisions.
+**Dependencies:** Pelyr self-service account/key and key-backed smoke evidence; the reviewed Pelyr API Terms 1.5 and Data Licence 1.1; Phase 2 provenance; Phase 3 renderer; the fixed Gulf of Finland scope; zero-persistence policy; and explicit Phase 4 implementation authorization.
 
-**Potential risks:** No upstream SLA/replay, disconnections, message bursts, stale positions, storage growth, identity conflicts, key exposure.
+**Potential risks:** Private pilot with no upstream SLA/replay or global guarantee, changing mixed-source licences, disconnections, message bursts, stale positions, accidental data redistribution, identity conflicts, and key exposure.
 
-**Acceptance criteria:** Key never reaches browser/logs; reconnect and gap behavior is tested; live position exposes event/ingest time; load remains bounded; provider outage never creates positions.
+**Acceptance criteria:** Key never reaches browser/logs; every displayed observation resolves to the current source directory and visible attribution; reconnect, heartbeat-loss, unknown-licence, and gap behavior are tested; live position exposes event/ingest time; load and extraction paths remain bounded; provider outage never creates positions.
 
 **Definition of Done:** A measured region can run continuously through planned failure scenarios with documented data loss/continuity semantics and green integration/load tests.
 
@@ -247,7 +247,7 @@ covered by the accepted globe and MapLibre adapter.
 | --- | --- | --- |
 | 2 follow-up | Data/System UI, Data Explorer, status components, contracts, map shell preparation | provider review, freshness/cache/health backend, region query, provider/API tests |
 | 3 | Command Center, Cesium/MapLibre, camera, layers, Region Workspace, Source/Confidence UI | BBOX/viewport/PostGIS queries, region summary, provider health, backend tests |
-| 4 | Vessel explorer/layer/detail, search UI, track/LOD/follow, connection UI | AISStream worker, validation/dedup, Redis/PostGIS, WebSocket/backpressure/retention |
+| 4 | Vessel layer/detail/follow, source/coverage/attribution and connection UI | Pelyr `/v1` adapter, licence mapping, bounded latest state, same-origin WebSocket/backpressure |
 | 5 | History/playback/traffic/corridor/compare UX and chart-map linking | archive pipeline, manifest, partition/track/aggregate/corridor computation |
 | 6 | Risk Center, geofence/evidence/timeline/explanation/environment context UX | deterministic rules, evidence storage, versioning/recompute/calibration support |
 | 7 | about 80%: GPU layers, particles, columns, scenes, tours, interaction and polish | server aggregation, optimized payloads, query/cache performance |

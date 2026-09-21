@@ -1,14 +1,15 @@
 # AISStream provider verification
 
 **Review date:** 2026-09-19  
-**Status:** Technical evidence recorded; provider implementation and public use remain blocked.
+**Status:** Superseded as the primary Phase 4 candidate on 2026-09-22; retained as
+historical evidence and an optional future-source review.
 
 Tracking issue: [#24](https://github.com/ApexForge-cz/Pelagos-eye/issues/24).
 
 ## Decision
 
-AISStream remains a candidate source for the Phase 4 live-AIS adapter, but it has not
-passed the source-onboarding gate. The repository records enough official technical
+AISStream is no longer the preferred source for the first Phase 4 live-AIS adapter and it
+has not passed the source-onboarding gate. The repository records enough official technical
 evidence to map a future adapter, while display, caching, retention, storage,
 redistribution, and commercial-use rights still require a current terms review.
 No WebSocket connection, API key, worker, route, raw fixture, or production claim is
@@ -112,3 +113,5 @@ is design evidence only.
 
 Monitor provider issue #298 for an authorized response to questions 1-5 and 7, including
 the applicable terms URL or effective date. Do **not** send or record an API key or token.
+This monitoring is no longer a dependency for the Pelyr candidate reviewed in
+`docs/36-pelyr-live-ais-provider-verification.md`.

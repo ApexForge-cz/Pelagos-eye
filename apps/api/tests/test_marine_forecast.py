@@ -10,6 +10,7 @@ import pytest
 from oceanscope_api.ocean.contracts import (
     MARINE_VARIABLES,
     FetchedMarineForecast,
+    MarineDownloadError,
     MarineForecastRequest,
     MarineSchemaError,
 )
@@ -102,6 +103,20 @@ def test_parser_rejects_row_when_all_values_are_null() -> None:
     assert parsed.quality_counts == {"coverage_unknown": 1}
 
 
+def test_parser_preserves_partial_nulls_with_coverage_warning() -> None:
+    document = forecast_document()
+    document["hourly"]["wave_height"][0] = None
+
+    parsed = OpenMeteoMarineParser().parse(dataset(document))
+
+    assert len(parsed.records) == 2
+    assert parsed.records_rejected == 0
+    assert parsed.quality_counts == {"coverage_unknown": 1}
+    assert parsed.records[0].wave_height_m is None
+    assert parsed.records[0].wave_period_s == 7.55
+    assert parsed.records[0].quality_flags == ("coverage_unknown",)
+
+
 def test_parser_supports_an_explicit_variable_subset() -> None:
     request = MarineForecastRequest(
         latitude=20,
@@ -176,3 +191,15 @@ def test_provider_uses_bounded_utc_sea_cell_request() -> None:
     checksum = hashlib.sha256(content).hexdigest()
     assert fetched.data_version.endswith(f"sha256:{checksum[:16]}")
     assert fetched.checksum_sha256 == checksum
+
+
+def test_provider_wraps_upstream_failure_as_marine_download_error() -> None:
+    transport = httpx.MockTransport(lambda _request: httpx.Response(503))
+
+    with (
+        httpx.Client(transport=transport) as client,
+        pytest.raises(MarineDownloadError, match="official download failed"),
+    ):
+        OpenMeteoMarineProvider(HttpDownloader(client)).fetch(
+            MarineForecastRequest(latitude=20, longitude=-40, forecast_hours=2)
+        )

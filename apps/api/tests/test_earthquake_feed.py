@@ -89,6 +89,30 @@ def test_parser_rejects_duplicate_event_id_within_feed() -> None:
     assert parsed.quality_counts == {"duplicate": 1}
 
 
+def test_parser_accepts_empty_feature_collection_as_empty_result() -> None:
+    document = feed_document()
+    document["metadata"]["count"] = 0
+    document["features"] = []
+
+    parsed = UsgsEarthquakeParser().parse(dataset(document))
+
+    assert parsed.records == []
+    assert parsed.records_received == 0
+    assert parsed.records_rejected == 0
+    assert parsed.quality_counts == {}
+
+
+def test_parser_rejects_invalid_event_timestamp() -> None:
+    document = feed_document()
+    document["features"][0]["properties"]["time"] = "not-a-timestamp"
+
+    parsed = UsgsEarthquakeParser().parse(dataset(document))
+
+    assert parsed.records == []
+    assert parsed.records_rejected == 1
+    assert parsed.quality_counts == {"invalid_timestamp": 1}
+
+
 def test_provider_versions_feed_by_generated_time_and_checksum() -> None:
     content = json.dumps(feed_document()).encode()
 

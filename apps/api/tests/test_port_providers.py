@@ -74,6 +74,32 @@ def test_official_providers_pin_release_or_content_hash() -> None:
     assert wpi.published_at is None
 
 
+def test_unlocode_provider_rejects_release_asset_on_unofficial_host() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert str(request.url) == UNLOCODE_RELEASE_API
+        return httpx.Response(
+            200,
+            json={
+                "tag_name": "TEST-DATA",
+                "released_at": "2026-09-17T00:00:00Z",
+                "assets": {
+                    "links": [
+                        {
+                            "name": "UNLOCODE Data Archive",
+                            "direct_asset_url": "https://example.test/unlocode.zip",
+                        }
+                    ]
+                },
+            },
+        )
+
+    with (
+        httpx.Client(transport=httpx.MockTransport(handler)) as client,
+        pytest.raises(PortDownloadError, match="official host"),
+    ):
+        UnLocodeProvider(HttpDownloader(client)).fetch()
+
+
 def test_downloader_enforces_bounded_artifact_size() -> None:
     transport = httpx.MockTransport(lambda _request: httpx.Response(200, content=b"12345"))
     with (

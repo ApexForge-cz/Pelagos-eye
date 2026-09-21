@@ -5,7 +5,7 @@ from zipfile import ZipFile
 
 import pytest
 
-from oceanscope_api.ports.contracts import FetchedPortDataset, SourceDescriptor
+from oceanscope_api.ports.contracts import FetchedPortDataset, PortSchemaError, SourceDescriptor
 from oceanscope_api.ports.parsers import (
     UnLocodeParser,
     WorldPortIndexParser,
@@ -89,6 +89,16 @@ def test_wpi_parser_rejects_invalid_coordinates_without_zero_fallback() -> None:
     assert result.records[0].source_record_id == "1"
     assert result.records[0].un_locode == "TSTST"
     assert result.records[0].raw_record["extra"] == "kept"
+
+
+def test_wpi_parser_rejects_missing_required_schema_column() -> None:
+    content = (
+        "portNumber,portName,countryCode,latitude,unloCode\n"
+        '1,TEST DATA Port,TS,"12掳34\'00""N",TS TST\n'
+    ).encode()
+
+    with pytest.raises(PortSchemaError, match="longitude"):
+        WorldPortIndexParser().parse(dataset(content, filename="test-data.csv"))
 
 
 @pytest.mark.parametrize(

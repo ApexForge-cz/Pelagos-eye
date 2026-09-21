@@ -437,7 +437,12 @@ def make_styles() -> dict[str, ParagraphStyle]:
 
 
 class ProjectPlanDocTemplate(BaseDocTemplate):
-    def __init__(self, filename: str, styles: dict[str, ParagraphStyle]) -> None:
+    def __init__(
+        self,
+        filename: str,
+        styles: dict[str, ParagraphStyle],
+        document_title: str,
+    ) -> None:
         super().__init__(
             filename,
             pagesize=A4,
@@ -445,7 +450,7 @@ class ProjectPlanDocTemplate(BaseDocTemplate):
             rightMargin=MARGIN_X,
             topMargin=MARGIN_TOP,
             bottomMargin=MARGIN_BOTTOM,
-            title="OceanScope Project Plan, Collaboration and Development Roadmap Version 2.1",
+            title=document_title,
             author="OceanScope",
             subject="Global Maritime Situational Awareness & Analytics Platform",
         )
@@ -498,7 +503,9 @@ class ProjectPlanDocTemplate(BaseDocTemplate):
         canvas.restoreState()
 
 
-def cover_story(styles: dict[str, ParagraphStyle]) -> list[object]:
+def cover_story(
+    styles: dict[str, ParagraphStyle], collaboration_plan: bool = False
+) -> list[object]:
     title = ParagraphStyle(
         "CoverTitle",
         fontName="Times-Bold",
@@ -539,9 +546,25 @@ def cover_story(styles: dict[str, ParagraphStyle]) -> list[object]:
         alignment=TA_CENTER,
     )
     label = ParagraphStyle("CoverLabel", parent=meta, fontName="OceanScopeHeading")
+    version = (
+        "1.1 / Phase 4+ 双人协作计划"
+        if collaboration_plan
+        else "2.1 / 项目规划与开发路线图"
+    )
+    date = "2026 年 9 月 22 日" if collaboration_plan else "2026 年 9 月 18 日"
+    current_phase = (
+        "Phase 0-3 已完成；Phase 4 仍为 Planned"
+        if collaboration_plan
+        else "Phase 0-2 已完成；Phase 3 待项目负责人批准"
+    )
+    document_name = (
+        "Phase 4+ 双人协作与分阶段交付计划"
+        if collaboration_plan
+        else "项目规划、双人协作与开发路线图"
+    )
     metadata = Table(
         [
-            [Paragraph("版本", label), Paragraph("2.1 / 项目规划与开发路线图", meta)],
+            [Paragraph("版本", label), Paragraph(version, meta)],
             [
                 Paragraph("开发方式", label),
                 Paragraph("双人协作开发 / Codex 辅助软件工程", meta),
@@ -550,10 +573,10 @@ def cover_story(styles: dict[str, ParagraphStyle]) -> list[object]:
                 Paragraph("用途", label),
                 Paragraph("非商业、学习研究、GitHub 作品集、软件工程项目", meta),
             ],
-            [Paragraph("日期", label), Paragraph("2026 年 9 月 18 日", meta)],
+            [Paragraph("日期", label), Paragraph(date, meta)],
             [
                 Paragraph("当前阶段", label),
-                Paragraph("Phase 0-2 已完成；Phase 3 待项目负责人批准", meta),
+                Paragraph(current_phase, meta),
             ],
         ],
         colWidths=[30 * mm, 105 * mm],
@@ -578,7 +601,7 @@ def cover_story(styles: dict[str, ParagraphStyle]) -> list[object]:
         Spacer(1, 5 * mm),
         Paragraph("全球港航态势感知与智能分析平台", chinese),
         Spacer(1, 12 * mm),
-        Paragraph("项目规划、双人协作与开发路线图", subtitle),
+        Paragraph(document_name, subtitle),
         Spacer(1, 17 * mm),
         metadata,
         Spacer(1, 15 * mm),
@@ -699,9 +722,13 @@ def build_diagram(lines: list[str], styles: dict[str, ParagraphStyle]) -> KeepTo
     )
 
 
-def parse_markdown(source: str, styles: dict[str, ParagraphStyle]) -> list[object]:
+def parse_markdown(
+    source: str,
+    styles: dict[str, ParagraphStyle],
+    collaboration_plan: bool = False,
+) -> list[object]:
     lines = source.splitlines()
-    story: list[object] = cover_story(styles)
+    story: list[object] = cover_story(styles, collaboration_plan)
 
     first_rule = next(
         (index for index, line in enumerate(lines) if line.strip() == "---"), 0
@@ -842,8 +869,14 @@ def build(source: Path, output: Path, sync_root: bool) -> None:
     styles = make_styles()
     markdown = source.read_text(encoding="utf-8")
     output.parent.mkdir(parents=True, exist_ok=True)
-    document = ProjectPlanDocTemplate(str(output), styles)
-    document.multiBuild(parse_markdown(markdown, styles))
+    collaboration_plan = source.name == "OceanScope_Two_Developer_Collaboration_Plan.md"
+    document_title = (
+        "OceanScope Phase 4+ Two-Developer Collaboration Plan"
+        if collaboration_plan
+        else "OceanScope Project Plan, Collaboration and Development Roadmap Version 2.1"
+    )
+    document = ProjectPlanDocTemplate(str(output), styles, document_title)
+    document.multiBuild(parse_markdown(markdown, styles, collaboration_plan))
     if sync_root:
         shutil.copyfile(output, ROOT_PDF)
 

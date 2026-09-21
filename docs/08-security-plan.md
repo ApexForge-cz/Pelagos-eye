@@ -6,7 +6,7 @@ Protect provider credentials, prevent unauthorized or abusive use, preserve data
 
 ## Assets
 
-- AISStream and future provider API keys
+- Pelyr and future provider API keys
 - Database and Redis credentials
 - Application signing/session secrets if accounts are added
 - Provider data and permitted caches

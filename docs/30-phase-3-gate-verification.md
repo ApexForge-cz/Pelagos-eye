@@ -49,8 +49,9 @@ inference, navigational-chart capability, or production deployment.
 
 ## Phase 4 entry conditions
 
-Phase 4 remains `Planned`. Before Live AIS implementation begins, the project still needs
-an approved AISStream account and terms review, a geographic demo scope, retention and
-redistribution decisions, typed live-message contracts, and an explicit owner authorization
-for the new phase. No Phase 4 provider, worker, WebSocket, vessel layer, or live-data claim
-is introduced by this gate.
+Phase 4 remains `Planned`. The later Pelyr review records a candidate provider, terms,
+licence restrictions, a Gulf of Finland demo scope, zero-persistence boundary, and typed
+live-message contracts. Before implementation begins, the project still needs a self-service
+key-backed connectivity/source-directory/coverage check, issue-scoped owner authorization,
+and acceptance of the same-origin anti-extraction controls. No Phase 4 provider, worker,
+WebSocket, vessel layer, or live-data claim is introduced by this gate.

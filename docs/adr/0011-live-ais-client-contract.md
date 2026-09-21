@@ -12,8 +12,8 @@ important failure modes: provider disconnections, gateway backpressure, client l
 cache, and geographic non-coverage. It could also leak provider dictionaries into the public
 API and make missing data look like an empty sea.
 
-This proposal freezes only the client-facing v1 vocabulary. It does not authorize an
-AISStream integration, retention policy, database migration, public route, or live-data claim.
+This proposal freezes only the client-facing v1 vocabulary. It does not authorize a Pelyr
+integration, retention policy, database migration, public route, or live-data claim.
 
 ## Decision
 

@@ -2,72 +2,78 @@
 
 Verified against official documentation and live official endpoints on **2026-09-17** for the
 Phase 2 sources. URLs and terms can change; each integration must re-check the official
-source before release. The separate AISStream review on 2026-09-19 records current
-verification limits in `docs/33-aisstream-provider-verification.md`.
+source before release. The superseded AISStream review remains in
+`docs/33-aisstream-provider-verification.md`; the selected Phase 4 provider candidate is
+reviewed in `docs/36-pelyr-live-ais-provider-verification.md`.
 
 ## Source matrix
 
 | Source | Official access | Key | Format | Update/latency | Planned scope | Primary limitation | Fallback |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| AISStream | `wss://stream.aisstream.io/v0/stream` | Required | binary WebSocket frames containing UTF-8 JSON | event-driven | live AIS | no SLA or replay; coverage and activity vary | labeled last verified cache, then unavailable |
+| Pelyr OPEN-AIS | `wss://stream.pelyr.com/v1/stream`; `https://api.pelyr.com` | Self-service key | JSON WebSocket frames and HTTPS JSON | event-driven; heartbeat every 20 s | bounded live AIS | mixed licences; no SLA/global guarantee; Pelyr-licensed data cannot be redistributed | direct separately reviewed national source, then unavailable |
 | MarineCadastre / AccessAIS | bulk downloads; AccessAIS ordering UI | No for public bulk access | compressed CSV; derived products vary | annual/archive publication, not live | U.S. historical AIS | U.S. waters; files are large; AccessAIS ordering can be unavailable | bulk archive mirror manifest; no global claim |
 | UNECE UN/LOCODE | official release downloads | No | CSV, TXT, XML/MDB and linked-data formats depending release | official biannual release; pre-release continuous | location identifiers and functions | locations are not all ports; coordinates are coarse/optional | pin last official release |
 | NGA WPI | official CSV and web viewer/downloads | No for download | CSV official; GeoPackage, JSON, shapefile, file geodatabase available | complete content updated monthly | port positions, characteristics, services | general reference only; not a substitute for charts | pin last verified CSV |
 | Open-Meteo Marine | `https://marine-api.open-meteo.com/v1/marine` | No on free non-commercial tier; required for paid endpoint | JSON; CSV/XLSX options | model-dependent, typically 6–24 h updates | wave, swell, SST, current and sea-level context | numerical-model uncertainty; coastal limitations | bounded cache, alternate model if explicit, then unavailable |
 | USGS Earthquakes | real-time GeoJSON feeds and FDSN event service | No | GeoJSON | summary feeds updated every minute | global earthquake context | preliminary events can be revised | last feed within TTL; query service for bounded history |
 
-## 1. AISStream
+## 1. Pelyr OPEN-AIS
 
-### Official source
+### Official sources
 
-- Documentation: <https://aisstream.io/documentation>
-- Service: <https://aisstream.io/>
+- Stream documentation: <https://dashboard.pelyr.com/en/docs/stream>
+- Native protocol: <https://dashboard.pelyr.com/en/docs/stream/protocol>
+- HTTPS API: <https://dashboard.pelyr.com/en/docs/api>
+- API terms: <https://pelyr.com/stream-terms>
+- Data licence: <https://pelyr.com/pelyr-data-license>
 
 ### Technical contract evidence
 
-- WebSocket endpoint: `wss://stream.aisstream.io/v0/stream`.
-- The official example uses one complete subscription with `APIKey`, `BoundingBoxes`,
-  and optional `FiltersShipMMSI` / `FilterMessageTypes` fields.
-- The official example connects to `wss://stream.aisstream.io/v0/stream`; Python enables
-  `deflate` compression and handles provider messages as UTF-8 JSON payloads.
-- The official message-model repository defines the subscription envelope and common
-  position/static-data message types.
-- A human browser review of the official `documentation#limits` page on 2026-09-20
-  confirmed three subscribed connections per account, three open connections per
-  originating IP before authentication, an initial subscription within three seconds,
-  at most one subscription replacement per connection per second, and at most 200
-  nine-character MMSI values per subscription. A replacement supersedes rather than
-  merges with the previous subscription.
-- The same page requires continuous reads and warns that buffered messages may be
-  discarded when a client does not consume them quickly enough. It also states that,
-  starting September 2026, uncompressed connections are subject to per-user bandwidth
-  limits and excess messages are dropped.
-- Historical planning notes recorded no SLA and no durable replay; these are not a
-  current terms certification. See the pinned revisions and website limitations in
-  `docs/33-aisstream-provider-verification.md`.
-- The backend must keep any API key server-side. Direct browser use and production
-  proxying remain unauthorized until current terms are reviewed.
+- The native stream is `wss://stream.pelyr.com/v1/stream`; bearer authentication belongs
+  in a server-controlled header, never a URL or browser bundle.
+- The unprompted `welcome` frame supplies the subscription deadline, effective limits,
+  protocol, source/licence directory, attribution, key scope, and provider notes.
+- A subscription uses named `west`, `south`, `east`, and `north` bounds and can request
+  position-only fields. The first slice uses one fixed box and no static messages.
+- A heartbeat arrives every 20 seconds and includes upstream/client loss evidence. Pelyr
+  closes persistently slow clients rather than claiming complete delivery.
+- The `/v0` endpoint is documented only as a partial AISStream migration aid. New code uses
+  `/v1` for nullable values, explicit close codes, confirmation frames, heartbeats, and
+  source provenance.
+- The HTTPS API can return current bounded snapshots and history, but Phase 4 does not use
+  its track endpoint or authorize exports.
 
 ### Fields to retain
 
-At minimum: message type, provider metadata, MMSI when present, ship name when present, latitude/longitude when present, message-specific payload, provider observation context, receive time, raw schema/message version, and ingestion identifiers. Position normalization includes speed over ground, course over ground, true heading, navigation status/validity where available. Fields vary by AIS message type and must not be assumed globally present.
+At minimum: Pelyr frame/protocol version, MMSI, latitude/longitude, provider receive time,
+message type, speed over ground, course over ground, heading, navigation status, rotation,
+position accuracy, plausibility/quality flags when supplied, licence id, resolved source,
+licence text, attribution, OceanScope ingest/normalize times, and connection epoch. Nullable
+values stay null. Source ids and licence ids are connection-scoped evidence, not labels to
+guess from geography.
 
 ### Engineering constraints
 
-- Negotiate compression where supported and monitor whether it is enabled.
-- Read continuously; apply backpressure and record any internal drop/coalescing.
-- Reconnect using exponential backoff with jitter and resubmit the full subscription.
-- Begin with bounded regions and message types; a whole-world promise requires measured bandwidth, storage, and source approval.
-- Persist observations needed for replay because the provider will not replay missed events.
+- Read continuously; apply backpressure and record provider and internal loss/coalescing.
+- Reconnect using exponential backoff with jitter, obtain a fresh source directory, and
+  resubmit the fixed subscription.
+- Stop publishing an observation whose licence id cannot be resolved against that
+  connection's source directory.
+- Begin with the approved Gulf of Finland box; never infer whole-world coverage from a
+  multi-source service.
+- Keep the provider key server-side. The OceanScope transport is fixed-scope, same-origin,
+  rate-limited, non-exportable product delivery, not a raw-data proxy.
+- Do not claim replay. The first slice deliberately persists no live AIS.
 
 ### License/use note
 
-An API account and current provider terms are required. The official repositories
-establish technical use, but the 2026-09-19 review could not retrieve the current
-website terms and did not identify a reusable open-data license grant for redistributing
-raw streams. Before implementation or public deployment, archive the applicable terms
-and confirm display, caching, retention, commercial-use, and redistribution rights.
-Treat this as a release blocker, not an assumed permission.
+A self-service account/key is required, but no manual provider application is documented.
+Pelyr API Terms 1.5 and Pelyr Data Licence 1.1 permit commercial analysis, storage, derived
+results, and visible in-product display with attribution. Pelyr-licensed raw data may not be
+redistributed, exported, served through a position-report API, relayed, or exposed for
+systematic extraction. Data under CC BY 4.0/NLOD remains under its source licence. Every
+view must display all attribution represented in it. See the full decision and remaining
+credential/coverage gate in `docs/36-pelyr-live-ais-provider-verification.md`.
 
 ## 2. MarineCadastre / AccessAIS
 

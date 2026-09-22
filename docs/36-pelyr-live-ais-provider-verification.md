@@ -2,8 +2,8 @@
 
 **Review date:** 2026-09-22
 
-**Status:** Selected Phase 4 candidate; implementation remains gated on a self-service
-credential and live connectivity/coverage evidence.
+**Status:** Selected Phase 4 candidate; credential-backed entry-gate smoke accepted.
+Provider implementation remains planned and requires its own issue-scoped pull request.
 
 **Tracking issue:** [#37](https://github.com/ApexForge-cz/Pelagos-eye/issues/37)
 
@@ -52,6 +52,53 @@ OceanScope will target `/v1`, not `/v0`. Pelyr explicitly labels `/v0` as partia
 compatibility that cannot be byte-for-byte verified against the former service. `/v1`
 provides named WGS 84 bounds, confirmation frames, heartbeats, loss counters, explicit close
 codes, nullable fields, and a source directory.
+
+## Credential-backed smoke evidence
+
+Developer A ran a bounded `/v1` smoke check on 2026-09-22. The credential was loaded only
+from the local, Git-ignored root `.env`; the check did not print or persist the credential,
+raw frames, MMSI values, vessel names, or coordinates.
+
+| Check | Observed evidence |
+| --- | --- |
+| Authentication/protocol | Authenticated connection received `welcome` with `protocol: pelyr.v1` |
+| Key scope | `welcome.key.scope` was `collector_receiver`; successful authenticated `/v1` streaming demonstrates the required stream capability |
+| Requested slice | One box: west `23.50`, south `59.50`, east `26.50`, north `60.50`; `fields: position` |
+| Effective subscription | `subscribed` confirmed one effective box and `fields: position` |
+| Continuity | First heartbeat arrived after about 20 seconds with `feed: ok`, `dropped: 0`, and observed `lag_ms: 112` |
+| Observation | The confirmation run counted 142 `position` frames in 21.1 seconds; payload content was neither printed nor retained |
+
+`dropped` is cumulative for the connection and covers provider ring-buffer and output-limit
+loss. Its zero value means no provider-reported loss occurred during this short run, not that
+future connections are lossless. `feed: ok` means messages were reaching Pelyr at that time;
+it is not evidence of global coverage, completeness, or an SLA. The position count proves
+that the fixed Gulf of Finland slice was non-empty during this run only.
+
+The runtime `welcome.limits` values were:
+
+| Limit | Runtime value |
+| --- | --- |
+| Subscriptions per connection | 4 |
+| Bounding boxes per subscription | 50 |
+| Bounding boxes per connection | 80 |
+| MMSI values per subscription | 500 |
+| Output bytes per second | 0 (unlimited under the documented protocol semantics) |
+| Monthly byte quota | 0 (unlimited under the documented protocol semantics) |
+
+The connection supplied this source/licence directory:
+
+| Source id | Licence | Runtime attribution |
+| --- | --- | --- |
+| `0` | `NOASSERTION` | Empty |
+| `1` | `LicenseRef-Pelyr-1.1` | `AIS data from Pelyr (pelyr.com), Pelyr Data Licence 1.1` |
+| `100` | `CC-BY-4.0` | `Traffic data from Fintraffic / digitraffic.fi` |
+| `102` | `NLOD-2.0` | `Data from Kystverket / kystverket.no` |
+| `104` | `NLOD` | `BarentsWatch Live AIS` |
+
+The runtime entries did not include a separate source-name field. Source id `0` has no
+asserted licence or attribution and therefore cannot be published by OceanScope. The future
+normalizer must reject or quarantine observations that resolve to `NOASSERTION`, an empty
+attribution, or an unknown source/licence rather than silently treating them as Pelyr data.
 
 ## Rights and restrictions
 
@@ -117,22 +164,22 @@ volume limit is enforced, but a value of `0` means unlimited, not zero, and this
   plausibility flags are evidence inputs, not proof that a position is genuine or false.
 
 The first slice uses a fixed Gulf of Finland box because Pelyr declares Fintraffic among its
-open-data sources and Fintraffic has official Finnish-water coverage. Actual Pelyr access,
-source ids, observations, latency, and coverage for that box still require a key-backed
-smoke test. An empty stream does not prove coverage or vessel absence.
+open-data sources and Fintraffic has official Finnish-water coverage. The 2026-09-22 smoke
+check confirmed current Pelyr access and non-empty observations for this box. That single
+bounded run does not establish continuous, complete, or global coverage. An empty future
+stream does not prove coverage or vessel absence.
 
 ## Phase 4 entry gate
 
-Before provider code begins, Developer A must:
+Developer A completed the entry gate on 2026-09-22:
 
-1. create a Pelyr account/API key through the self-service portal without sharing the key;
-2. place the key only in the approved local server environment variable path;
-3. run a bounded smoke check that records no raw payload or credential;
-4. verify the `/v1` welcome protocol, effective limits, source directory, attribution,
-   heartbeat, and Gulf of Finland observations or explicit coverage notice; and
-5. record whether the key has the `stream` capability.
+1. a replacement self-service credential was stored only in the local, Git-ignored `.env`;
+2. the smoke check retained no raw payload or credential;
+3. `/v1` protocol, key scope, effective limits, source directory, attribution, subscription,
+   heartbeat, and Gulf of Finland observations were verified; and
+4. the source id `0` `NOASSERTION` handling requirement was added to the implementation gate.
 
-After that evidence is accepted, Developer B may implement the adapter/normalizer in the
-issue-scoped paths. Phase 4 remains `Planned` until the implementation issue is explicitly
-opened and authorized. No credential, provider payload, or production record belongs in
-this verification document.
+Developer B's adapter/normalizer issue may now be opened in the agreed provider and backend
+test paths. Phase 4 remains `Planned` until that implementation issue is explicitly opened
+and authorized; this verification does not authorize a public stream, persistence, or UI.
+No credential, provider payload, or production record belongs in this document.

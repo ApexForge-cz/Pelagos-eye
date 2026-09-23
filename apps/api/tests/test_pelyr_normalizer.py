@@ -81,7 +81,7 @@ def normalize(frame: dict[str, object]) -> LiveAisPosition:
 def test_normalizes_position_and_preserves_runtime_source_provenance() -> None:
     position = normalize(position_frame())
 
-    assert position.observation_id == "pelyr:100:230000001:2026-09-22T09:00:00Z"
+    assert position.observation_id == "pelyr:100:test-position-001"
     assert position.mmsi == "230000001"
     assert position.observed_at == datetime(2026, 9, 22, 9, 0, tzinfo=UTC)
     assert position.latitude == 60.17
@@ -198,3 +198,26 @@ def test_rejects_unpublishable_source_metadata(entry: dict[str, object]) -> None
             ingested_at=INGESTED_AT,
             normalized_at=NORMALIZED_AT,
         )
+
+
+def test_rejects_noassertion_with_whitespace() -> None:
+    directory = PelyrSourceDirectory.from_provider_entries(
+        [{"id": 7, "license": " NOASSERTION ", "attribution": "Unknown"}]
+    )
+
+    with pytest.raises(PelyrNormalizationError, match="NOASSERTION"):
+        normalize_frame = PelyrPositionNormalizer().normalize
+        normalize_frame(
+            position_frame(license=7),
+            directory,
+            ingested_at=INGESTED_AT,
+            normalized_at=NORMALIZED_AT,
+        )
+
+
+def test_same_second_events_have_different_observation_ids() -> None:
+    first = normalize(position_frame(id="event-a", lat=60.1))
+    second = normalize(position_frame(id="event-b", lat=60.2))
+
+    assert first.observed_at == second.observed_at
+    assert first.observation_id != second.observation_id

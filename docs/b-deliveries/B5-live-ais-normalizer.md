@@ -30,8 +30,10 @@ route, or implement a worker, gateway, cache, or UI.
 | `data.rx_ts` | `observed_at` | Required timezone-aware ISO-8601 timestamp normalized to UTC |
 | explicit `ingested_at` / `normalized_at` | provenance processing times | Required timezone-aware inputs normalized to UTC |
 
-`observation_id` is deterministically formed from the resolved source id, MMSI, and UTC
-observation time. The provider frame `id` is not treated as vessel identity.
+`observation_id` is deterministically formed from the resolved source id and provider frame
+`id`. The source prefix prevents frame-id collisions between providers, while the frame id
+prevents different reports received for one vessel in the same second from colliding. The
+provider frame `id` is not treated as vessel identity or a cross-source ordering key.
 
 The frozen public v1 contract has no provider-specific licence columns. The adapter keeps
 the resolved source id and licence identifier in `provenance.data_version` using the

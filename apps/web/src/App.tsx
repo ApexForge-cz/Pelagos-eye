@@ -29,6 +29,7 @@ import {
   type ViewportBounds,
 } from './api/spatial'
 import type { MapSelection } from './components/MapWorkspace'
+import { LiveAisStatusPanel } from './components/LiveAisStatusPanel'
 
 const MapWorkspace = lazy(async () => {
   const module = await import('./components/MapWorkspace')
@@ -356,6 +357,8 @@ export function App() {
           {selected ? <SelectionPanel selection={selected} marine={marine} /> : <EmptySelection />}
           <div className="right-divider" />
           <SourceHealth platform={platform} />
+          <div className="right-divider" />
+          <LiveAisStatusPanel status={null} />
         </aside>
       </div>
 

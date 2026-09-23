@@ -966,6 +966,101 @@ p {
 .source-health {
   padding: 1rem;
 }
+.live-ais-status {
+  padding: 1rem;
+}
+.live-ais-status-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.live-ais-status-heading h3 {
+  margin: 0.25rem 0 0;
+  color: #dbecef;
+  font-size: 0.83rem;
+  font-weight: 680;
+}
+.live-ais-icon {
+  color: #7b8e96;
+}
+.live-ais-icon.is-live {
+  color: var(--green);
+}
+.live-ais-state {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  margin-top: 0.85rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid rgb(255 123 104 / 24%);
+  color: #f29b8e;
+  background: rgb(134 54 44 / 10%);
+  font-size: 0.62rem;
+}
+.live-ais-state[data-state='available'] {
+  border-color: rgb(112 213 183 / 30%);
+  color: var(--green);
+  background: rgb(50 125 103 / 12%);
+}
+.live-ais-state strong {
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+.live-ais-state span {
+  margin-left: auto;
+  color: #91a6ae;
+  font-size: 0.57rem;
+  font-weight: 760;
+}
+.live-ais-facts {
+  display: grid;
+  gap: 0;
+  margin: 0.65rem 0 0;
+}
+.live-ais-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.42rem 0;
+  border-top: 1px solid rgb(134 189 202 / 7%);
+}
+.live-ais-facts dt {
+  color: #637a84;
+  font-size: 0.59rem;
+}
+.live-ais-facts dd {
+  margin: 0;
+  color: #aebec5;
+  font-size: 0.59rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.live-ais-detail {
+  margin: 0.65rem 0 0;
+  color: #8298a2;
+  font-size: 0.61rem;
+  line-height: 1.5;
+}
+.live-ais-gap {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.7rem;
+  padding: 0.55rem 0.6rem;
+  border-left: 2px solid var(--amber);
+  color: #d4ae70;
+  background: rgb(129 89 34 / 12%);
+  font-size: 0.59rem;
+}
+.live-ais-gap strong {
+  font-size: 0.59rem;
+  font-weight: 800;
+}
+.live-ais-gap span,
+.live-ais-gap small {
+  color: #a89169;
+  font-size: 0.58rem;
+}
 .health-score {
   display: flex;
   align-items: baseline;

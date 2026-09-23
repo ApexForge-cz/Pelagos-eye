@@ -45,7 +45,7 @@ class PelyrSourceDescriptor:
     def validate_publishable(self) -> None:
         if self.source_id == 0:
             raise PelyrNormalizationError("Pelyr source 0 has NOASSERTION and cannot be published")
-        if self.license_identifier.upper() == "NOASSERTION":
+        if self.license_identifier.strip().upper() == "NOASSERTION":
             raise PelyrNormalizationError(
                 f"Pelyr source {self.source_id} has NOASSERTION and cannot be published"
             )
@@ -119,9 +119,8 @@ class PelyrPositionNormalizer:
             data.get("heading"), "heading", minimum=0, maximum=360, maximum_inclusive=False
         )
 
-        observation_time = observed_at.isoformat().replace("+00:00", "Z")
         return LiveAisPosition(
-            observation_id=f"pelyr:{source.source_id}:{mmsi}:{observation_time}",
+            observation_id=f"pelyr:{source.source_id}:{frame_id}",
             mmsi=mmsi,
             observed_at=observed_at,
             longitude=longitude,

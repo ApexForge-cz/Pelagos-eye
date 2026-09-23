@@ -28,6 +28,7 @@ import {
   type SpatialSnapshot,
   type ViewportBounds,
 } from './api/spatial'
+import { createInitialLiveAisState } from './api/liveAisState'
 import type { MapSelection } from './components/MapWorkspace'
 import { LiveAisStatusPanel } from './components/LiveAisStatusPanel'
 
@@ -49,6 +50,7 @@ type PlatformView =
   | { kind: 'error'; message: string }
 
 export function App() {
+  const [liveAis] = useState(createInitialLiveAisState)
   const [platform, setPlatform] = useState<PlatformView>({ kind: 'loading' })
   const [refreshKey, setRefreshKey] = useState(0)
   const [bounds, setBounds] = useState<ViewportBounds | null>(null)
@@ -358,7 +360,7 @@ export function App() {
           <div className="right-divider" />
           <SourceHealth platform={platform} />
           <div className="right-divider" />
-          <LiveAisStatusPanel status={null} />
+          <LiveAisStatusPanel status={liveAis.status} gap={liveAis.gap} />
         </aside>
       </div>
 

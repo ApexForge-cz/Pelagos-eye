@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import json
+import logging
 from collections import deque
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
@@ -527,8 +528,8 @@ def test_concrete_connector_keeps_key_out_of_url_and_disables_transport_logging(
         assert TEST_API_KEY not in str(captured["uri"])
         assert captured["additional_headers"] == {"Authorization": f"Bearer {TEST_API_KEY}"}
         logger = captured["logger"]
-        assert isinstance(logger, worker_module.logging.Logger)
-        assert logger.isEnabledFor(worker_module.logging.CRITICAL) is False
+        assert isinstance(logger, logging.Logger)
+        assert logger.isEnabledFor(logging.CRITICAL) is False
 
     asyncio.run(scenario())
 

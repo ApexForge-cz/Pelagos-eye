@@ -37,6 +37,13 @@ export function reduceLiveAisEvent(
   event: LiveAisServerEvent,
 ): LiveAisClientState {
   if (event.event === 'vessel.snapshot') {
+    if (
+      event.stream_epoch === state.streamEpoch &&
+      state.lastSequence !== null &&
+      event.sequence <= state.lastSequence
+    ) {
+      return state
+    }
     return {
       streamEpoch: event.stream_epoch,
       lastSequence: event.sequence,
@@ -68,6 +75,7 @@ export function reduceLiveAisEvent(
       lastSequence: event.sequence,
       requiresSnapshot: true,
       positions: {},
+      status: null,
       gap: event,
       truncated: false,
       continuityIssue: 'snapshot_required',
@@ -99,10 +107,10 @@ function rejectUntilSnapshot(
   return {
     ...state,
     streamEpoch: event.stream_epoch,
-    lastSequence: null,
+    lastSequence: event.stream_epoch === state.streamEpoch ? state.lastSequence : null,
     requiresSnapshot: true,
     positions: {},
-    status: event.event === 'stream.status' ? event : state.status,
+    status: event.event === 'stream.status' ? event : null,
     gap: event.event === 'stream.gap' ? event : state.gap,
     truncated: false,
     continuityIssue,

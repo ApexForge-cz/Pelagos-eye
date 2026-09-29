@@ -222,6 +222,18 @@ and after source, architecture, team, or deployment changes.
   credential smoke check and accepts the effective limits, source directory, attribution,
   observed coverage, and same-origin anti-extraction controls. Phase 4 remains `Planned`.
 
+## Phase 4 map-layer preparation - 2026-09-29
+
+- R-01 and R-10: the optional 2D AIS layer requires both current browser transport and
+  a continuous covered snapshot; observations expire within five minutes even if the
+  socket is silent. Browser disconnect and source outage still require integration
+  acceptance once B6.2 is available.
+- R-06: rendering uses one GeoJSON source, capped at 5,000 points; backend queue and
+  snapshot limits remain Developer B's responsibility. The cap is not completeness.
+- R-09: per-source attribution is displayed for rendered positions; a selected-vessel
+  detail with observation time and quality flags remains unimplemented; the page does
+  not pass AIS observations into the layer. Do not present it as operational AIS.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

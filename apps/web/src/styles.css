@@ -583,6 +583,29 @@ p {
   font-size: 0.57rem;
   font-weight: 750;
 }
+.map-ais-state {
+  position: absolute;
+  z-index: 4;
+  top: 3.25rem;
+  left: 0.75rem;
+  display: grid;
+  gap: 0.25rem;
+  max-width: min(24rem, calc(100% - 5rem));
+  max-height: 8rem;
+  overflow: auto;
+  padding: 0.5rem;
+  border: 1px solid rgb(232 187 105 / 42%);
+  color: #f3e3c4;
+  background: rgb(7 18 25 / 94%);
+  font-size: 0.68rem;
+  overflow-wrap: anywhere;
+}
+.map-ais-state a {
+  display: inline-block;
+  margin-right: 0.5rem;
+  color: #f3d7a8;
+  text-decoration: underline;
+}
 .spatial-marker {
   width: 9px;
   height: 9px;

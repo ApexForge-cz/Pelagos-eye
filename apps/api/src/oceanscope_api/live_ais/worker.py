@@ -590,6 +590,12 @@ class PelyrWorker:
                 except PelyrNormalizationError:
                     self._reject_frame()
                     continue
+                if not (
+                    PELYR_BOUNDS["west"] <= position.longitude <= PELYR_BOUNDS["east"]
+                    and PELYR_BOUNDS["south"] <= position.latitude <= PELYR_BOUNDS["north"]
+                ):
+                    self._reject_frame()
+                    continue
                 self._metrics = replace(
                     self._metrics,
                     positions_accepted=self._metrics.positions_accepted + 1,

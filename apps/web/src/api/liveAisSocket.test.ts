@@ -23,8 +23,6 @@ describe('liveAisSocketUrl', () => {
     const page = new URL('https://oceanscope.example/map')
     page.username = 'TEST_DATA'
     page.password = 'TEST_DATA'
-    expect(liveAisSocketUrl(page.toString())).toBe(
-      'wss://oceanscope.example/live-ais/ws',
-    )
+    expect(liveAisSocketUrl(page.toString())).toBe('wss://oceanscope.example/live-ais/ws')
   })
 })

@@ -220,6 +220,28 @@ def test_accepts_zero_as_an_unlimited_runtime_limit() -> None:
     validate_welcome(frame)
 
 
+def test_rejects_position_outside_confirmed_fixed_subscription() -> None:
+    async def scenario() -> None:
+        outside = position_frame()
+        data = outside["data"]
+        assert isinstance(data, dict)
+        data["lon"] = 27.0  # TEST DATA: valid WGS 84, outside the fixed Gulf box.
+        connection = FakeConnection([welcome_frame(), subscribed_frame(), outside])
+        positions: list[LiveAisPosition] = []
+        statuses: list[PelyrWorkerStatusEvent] = []
+        worker, _ = worker_for(connection, positions=positions, statuses=statuses)
+
+        task = asyncio.create_task(worker.run())
+        await wait_until(lambda: worker.metrics.frames_rejected == 1)
+
+        assert positions == []
+        assert worker.metrics.positions_accepted == 0
+        assert statuses[-1].connection_state == "CONNECTED"
+        await cancel_worker(task)
+
+    asyncio.run(scenario())
+
+
 @pytest.mark.parametrize(
     "mutate",
     [

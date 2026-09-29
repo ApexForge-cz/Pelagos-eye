@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      '/live-ais': { target: 'http://127.0.0.1:8000', ws: true },
       '/data': 'http://127.0.0.1:8000',
       '/earthquakes': 'http://127.0.0.1:8000',
       '/ocean': 'http://127.0.0.1:8000',

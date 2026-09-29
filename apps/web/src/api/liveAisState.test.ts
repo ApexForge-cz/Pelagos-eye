@@ -41,6 +41,21 @@ describe('reduceLiveAisEvent', () => {
     expect(state.positions).toEqual({})
     expect(state.gap?.reason).toBe('provider_disconnect')
     expect(state.gap?.replay_available).toBe(false)
+    expect(state.status).toBeNull()
+  })
+
+  it('does not restore old positions from a snapshot predating a gap', () => {
+    const beforeGap = events.slice(0, 3).reduce(reduceLiveAisEvent, createInitialLiveAisState())
+    const afterGap = reduceLiveAisEvent(beforeGap, gap)
+    const stale = reduceLiveAisEvent(afterGap, snapshot)
+
+    expect(stale).toBe(afterGap)
+    expect(stale.positions).toEqual({})
+    expect(stale.requiresSnapshot).toBe(true)
+
+    const fresh = reduceLiveAisEvent(afterGap, { ...snapshot, sequence: gap.sequence + 1 })
+    expect(fresh.requiresSnapshot).toBe(false)
+    expect(fresh.positions['999000001']).toBeDefined()
   })
 
   it('rejects skipped sequences and changed epochs until a snapshot arrives', () => {
@@ -50,6 +65,8 @@ describe('reduceLiveAisEvent', () => {
     expect(skipped.requiresSnapshot).toBe(true)
     expect(skipped.positions).toEqual({})
     expect(skipped.continuityIssue).toBe('sequence_discontinuity')
+    expect(skipped.lastSequence).toBe(snapshot.sequence)
+    expect(reduceLiveAisEvent(skipped, snapshot)).toBe(skipped)
 
     const changedEpoch = reduceLiveAisEvent(afterSnapshot, {
       ...status,

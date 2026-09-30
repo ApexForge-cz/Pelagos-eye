@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     data_directory: Path = Path("data")
     database_url: SecretStr | None = None
     redis_url: SecretStr | None = None
+    pelyr_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias="PELYR_API_KEY",
+    )
+    live_ais_origins: str = ""
     aisstream_api_key: SecretStr | None = Field(
         default=None,
         validation_alias="AISSTREAM_API_KEY",
@@ -33,9 +38,21 @@ class Settings(BaseSettings):
             return None
         return value
 
+    @field_validator("pelyr_api_key", mode="before")
+    @classmethod
+    def reject_blank_pelyr_key(cls, value: object) -> object:
+        if value is None:
+            return None
+        raw_value = value.get_secret_value() if isinstance(value, SecretStr) else str(value)
+        return None if not raw_value.strip() else value
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def live_ais_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.live_ais_origins.split(",") if origin.strip()]
 
 
 @lru_cache

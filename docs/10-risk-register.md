@@ -234,6 +234,18 @@ and after source, architecture, team, or deployment changes.
   detail with observation time and quality flags remains unimplemented; the page does
   not pass AIS observations into the layer. Do not present it as operational AIS.
 
+## Phase 4 B6.2 post-merge acceptance - 2026-10-08
+
+- R-01 and R-10 remain blocking after PR #54: old provider-session ingress can cross an
+  epoch/gap boundary because the queued ingress is not invalidated with latest/pending state.
+  Issue #56 requires generation-safe invalidation and deterministic regression evidence.
+- R-15 and R-16 remain blocking after PR #54: outbound overflow recovery can reuse the
+  sequence of an event already handed to the WebSocket sender but not yet marked sent. Issue
+  #56 requires unique, strictly increasing client sequences across the gap/snapshot recovery.
+- The A-side map and inspector continue to reject disconnected, discontinuous, unavailable,
+  uncovered, delayed/offline, out-of-bounds, and older-than-five-minute observations. They
+  remain disconnected from the product gateway until Issue #56 passes Developer A review.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

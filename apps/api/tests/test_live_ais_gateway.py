@@ -3,7 +3,10 @@ import json
 import time
 import tracemalloc
 from datetime import UTC, datetime, timedelta
+from itertools import pairwise
 from uuid import UUID
+
+import pytest
 
 from oceanscope_api.api.contracts.live_ais import (
     LiveAisGapEvent,
@@ -368,3 +371,250 @@ def test_synthetic_benchmark_stays_within_first_slice_memory_target() -> None:
     assert measured["positions"] == 10_000
     assert measured["snapshot_positions"] == 5_000
     assert measured["peak_bytes"] < 128 * 1024 * 1024
+
+
+@pytest.mark.parametrize("boundary", ["epoch", "gap"])
+def test_queued_ingress_cannot_cross_provider_boundary(boundary: str) -> None:
+    async def scenario() -> None:
+        # TEST DATA: old-session records must never enter the replacement stream.
+        gateway = LiveAisGateway(
+            worker_configured=True,
+            config=LiveAisGatewayConfig(ingress_capacity=2),
+            now=lambda: NOW,
+        )
+        gateway.status_sink(status())
+        gateway.position_sink(position("230000001"))
+        await gateway.flush_pending()
+        client = gateway.register_client()
+        assert client is not None
+        await receive_and_mark(client)
+        await receive_and_mark(client)
+        gateway.position_sink(position("230000002"))
+        gateway.position_sink(position("230000003"))
+        gateway.position_sink(position("230000004"))  # Old-session overflow.
+
+        if boundary == "epoch":
+            gateway.status_sink(status(epoch=EPOCH_TWO))
+        else:
+            gateway.gap_sink(gap())
+        assert gateway.current_snapshot().positions == ()
+        await gateway.flush_pending()
+        assert gateway.latest_count == 0
+        assert gateway.current_snapshot().positions == ()
+        while client.queue_depth:
+            event = await receive_and_mark(client)
+            assert not isinstance(event, LiveAisPositionEvent)
+            if isinstance(event, LiveAisGapEvent):
+                assert event.reason == "provider_disconnect"
+            if isinstance(event, LiveAisStatusEvent):
+                assert event.last_observation_at is None
+            if isinstance(event, LiveAisSnapshotEvent):
+                assert event.positions == ()
+        assert gateway.metrics.positions_dropped == 3
+        assert gateway.metrics.positions_invalidated == 2
+
+        # The new session still accepts real normalized positions after recovery.
+        gateway.status_sink(status(epoch=EPOCH_TWO if boundary == "epoch" else EPOCH_ONE))
+        gateway.position_sink(position("230000005"))
+        await gateway.flush_pending()
+        assert [p.mmsi for p in gateway.current_snapshot().positions] == ["230000005"]
+        await gateway.stop()
+
+    asyncio.run(scenario())
+
+
+def pause_first_dequeue[QueueValue](
+    queue: asyncio.Queue[QueueValue], monkeypatch: pytest.MonkeyPatch
+) -> tuple[asyncio.Event, asyncio.Event]:
+    """Hold a dequeued TEST DATA event before the consumer resumes, without sleeps."""
+    taken = asyncio.Event()
+    release = asyncio.Event()
+    original_get = queue.get
+
+    async def get() -> QueueValue:
+        item = await original_get()
+        if not taken.is_set():
+            taken.set()
+            await release.wait()
+        return item
+
+    monkeypatch.setattr(queue, "get", get)
+    return taken, release
+
+
+@pytest.mark.parametrize("boundary", ["epoch", "gap"])
+def test_dequeued_ingress_cannot_cross_provider_boundary(
+    boundary: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def scenario() -> None:
+        gateway = LiveAisGateway(
+            worker_configured=True,
+            config=LiveAisGatewayConfig(coalesce_seconds=0.001),
+            now=lambda: NOW,
+        )
+        gateway.status_sink(status())
+        client = gateway.register_client()
+        assert client is not None
+        await receive_and_mark(client)
+        await receive_and_mark(client)
+        taken, release = pause_first_dequeue(gateway._ingress, monkeypatch)
+        gateway.position_sink(position("230000001"))
+        await gateway.start()
+        try:
+            async with asyncio.timeout(1):
+                await taken.wait()
+                gateway.position_sink(position("230000002"))
+                if boundary == "epoch":
+                    gateway.status_sink(status(epoch=EPOCH_TWO))
+                else:
+                    gateway.gap_sink(gap())
+                    gateway.status_sink(status())
+                assert gateway.current_snapshot().positions == ()
+                while client.queue_depth:
+                    event = await receive_and_mark(client)
+                    if isinstance(event, LiveAisSnapshotEvent):
+                        assert event.positions == ()
+                gateway.position_sink(position("230000003"))
+                release.set()
+                event = await receive_and_mark(client)
+                assert isinstance(event, LiveAisPositionEvent)
+                assert event.position.mmsi == "230000003"
+                assert [p.mmsi for p in gateway.current_snapshot().positions] == ["230000003"]
+                assert gateway.metrics.positions_dropped == 2
+                assert client.queue_depth == 0
+        finally:
+            release.set()
+            await gateway.stop()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("ack_before_gap", [True, False])
+def test_slow_client_recovery_reserves_in_flight_sequence(ack_before_gap: bool) -> None:
+    async def scenario() -> None:
+        gateway = LiveAisGateway(
+            worker_configured=True,
+            config=LiveAisGatewayConfig(client_queue_capacity=2),
+            now=lambda: NOW,
+        )
+        gateway.status_sink(status())
+        client = gateway.register_client()
+        assert client is not None
+        first = await receive_and_mark(client)
+        in_flight = await client.next_event()
+        assert in_flight is not None
+        # TEST DATA: simulate blocked WebSocket send while the outbound queue overflows.
+        for index in range(3):
+            gateway.position_sink(position(f"23000000{index + 1}"))
+            await gateway.flush_pending()
+        assert (client.recovering, client.closed) == (True, False)
+        assert client.queue_depth == 2
+        if ack_before_gap:
+            client.mark_sent(in_flight)
+        recovery_gap = await receive_and_mark(client)
+        if not ack_before_gap:
+            client.mark_sent(in_flight)
+        recovery_snapshot = await receive_and_mark(client)
+        assert isinstance(recovery_gap, LiveAisGapEvent)
+        assert recovery_gap.reason == "client_backpressure"
+        assert recovery_gap.replay_available is False
+        assert isinstance(recovery_snapshot, LiveAisSnapshotEvent)
+        sequences = [
+            first.sequence,
+            in_flight.sequence,
+            recovery_gap.sequence,
+            recovery_snapshot.sequence,
+        ]
+        assert all(right > left for left, right in pairwise(sequences))
+        assert len(set(sequences)) == len(sequences)
+        assert client.last_sent_sequence == recovery_snapshot.sequence
+        assert not client.recovering
+        # Recovery can complete and normal delivery continues above the snapshot.
+        gateway.position_sink(position("230000004"))
+        await gateway.flush_pending()
+        event = await receive_and_mark(client)
+        assert isinstance(event, LiveAisPositionEvent)
+        assert event.sequence == recovery_snapshot.sequence + 1
+        await gateway.stop()
+
+    asyncio.run(scenario())
+
+
+def test_shutdown_cancels_dequeued_ingress_and_purges_queued_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def scenario() -> None:
+        gateway = LiveAisGateway(worker_configured=True, now=lambda: NOW)
+        gateway.status_sink(status())
+        gateway.position_sink(position("230000001"))
+        await gateway.flush_pending()
+        client = gateway.register_client()
+        assert client is not None
+        taken, release = pause_first_dequeue(gateway._ingress, monkeypatch)
+        gateway.position_sink(position("230000002"))
+        await gateway.start()
+        try:
+            async with asyncio.timeout(1):
+                await taken.wait()
+                gateway.position_sink(position("230000003"))
+                gateway._coalesce(position("230000005"))
+                await gateway.stop()
+            assert gateway.latest_count == 0
+            assert gateway._ingress.empty()
+            assert gateway._pending == {}
+            assert gateway._server_overflow_pending == 0
+            assert gateway.client_count == 0
+            assert client.closed
+            assert await client.next_event() is None
+            assert client.queue_depth == 0
+            assert gateway.current_snapshot().positions == ()
+            assert gateway._last_observation_at is None
+            await gateway.start()
+            gateway.position_sink(position("230000004"))
+            await gateway.flush_pending()
+            assert [p.mmsi for p in gateway.current_snapshot().positions] == ["230000004"]
+        finally:
+            release.set()
+            await gateway.stop()
+
+    asyncio.run(scenario())
+
+
+def test_epoch_reset_discards_previous_handed_out_sequence_and_late_ack() -> None:
+    async def scenario() -> None:
+        gateway = LiveAisGateway(
+            worker_configured=True,
+            config=LiveAisGatewayConfig(client_queue_capacity=2),
+            now=lambda: NOW,
+        )
+        gateway.status_sink(status())
+        client = gateway.register_client()
+        assert client is not None
+        await receive_and_mark(client)
+        await receive_and_mark(client)
+        for _ in range(5):
+            gateway.status_sink(status())
+            await receive_and_mark(client)
+        gateway.status_sink(status())
+        old_in_flight = await client.next_event()
+        assert old_in_flight is not None and old_in_flight.sequence == 7
+        gateway.status_sink(status(epoch=EPOCH_TWO))
+        new_snapshot = await receive_and_mark(client)
+        assert new_snapshot.sequence == 0
+        new_in_flight = await client.next_event()
+        assert new_in_flight is not None and new_in_flight.sequence == 1
+        client.mark_sent(old_in_flight)
+        assert client.last_sent_sequence == 0
+        for index in range(3):
+            gateway.position_sink(position(f"23000000{index + 1}"))
+            await gateway.flush_pending()
+        recovery_gap = await receive_and_mark(client)
+        recovery_snapshot = await receive_and_mark(client)
+        assert isinstance(recovery_gap, LiveAisGapEvent)
+        assert recovery_gap.stream_epoch == UUID(EPOCH_TWO)
+        assert recovery_gap.sequence == 2
+        assert isinstance(recovery_snapshot, LiveAisSnapshotEvent)
+        assert recovery_snapshot.sequence == 3
+        await gateway.stop()
+
+    asyncio.run(scenario())

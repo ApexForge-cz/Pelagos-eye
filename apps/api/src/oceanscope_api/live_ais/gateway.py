@@ -83,6 +83,7 @@ class LiveAisGatewayMetrics:
     positions_published: int = 0
     positions_coalesced: int = 0
     positions_dropped: int = 0
+    positions_invalidated: int = 0
     expired_positions: int = 0
     provider_gaps: int = 0
     server_gaps: int = 0
@@ -93,6 +94,12 @@ class LiveAisGatewayMetrics:
     clients_rejected: int = 0
     slow_clients_disconnected: int = 0
     max_coalesce_latency_ms: float = 0.0
+
+
+@dataclass(frozen=True, slots=True)
+class _IngressPosition:
+    position: LiveAisPosition
+    generation: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,6 +125,7 @@ class LiveAisClient:
         self._stream_epoch = stream_epoch
         self._next_sequence = 0
         self._last_sent_sequence = -1
+        self._last_handed_out_sequence = -1
         self._recovering = False
         self._closed = False
 
@@ -149,6 +157,8 @@ class LiveAisClient:
         item = await self._queue.get()
         if isinstance(item, _CloseSignal):
             return None
+        if item.stream_epoch == self._stream_epoch:
+            self._last_handed_out_sequence = max(self._last_handed_out_sequence, item.sequence)
         return item
 
     def mark_sent(self, event: LiveAisServerEvent) -> None:
@@ -177,13 +187,15 @@ class LiveAisClient:
         self._stream_epoch = stream_epoch
         self._next_sequence = 0
         self._last_sent_sequence = -1
+        self._last_handed_out_sequence = -1
         self._recovering = False
 
     def begin_recovery(self) -> int | None:
         if self._closed or self._recovering or self._last_sent_sequence < 0:
             return None
         dropped = self._clear_queue()
-        self._next_sequence = self._last_sent_sequence + 1
+        # A WebSocket send may still be awaiting completion for a handed-out event.
+        self._next_sequence = max(self._last_sent_sequence, self._last_handed_out_sequence) + 1
         self._recovering = True
         return dropped
 
@@ -227,7 +239,8 @@ class LiveAisGateway:
         self._provider_epoch: str | None = None
         self._coverage_state = coverage_state
         self._coverage_effective_at = self._utc_now()
-        self._ingress: asyncio.Queue[LiveAisPosition] = asyncio.Queue(
+        self._ingress_generation = 0
+        self._ingress: asyncio.Queue[_IngressPosition] = asyncio.Queue(
             maxsize=self._config.ingress_capacity
         )
         self._pending: dict[str, LiveAisPosition] = {}
@@ -281,12 +294,8 @@ class LiveAisGateway:
         self._pending.clear()
         self._latest.clear()
         self._pending_since = None
-        self._server_overflow_pending = 0
-        while True:
-            try:
-                self._ingress.get_nowait()
-            except asyncio.QueueEmpty:
-                break
+        self._last_observation_at = None
+        self._invalidate_ingress()
         self._metrics = replace(self._metrics, clients_connected=0)
 
     def position_sink(self, position: LiveAisPosition) -> None:
@@ -295,7 +304,7 @@ class LiveAisGateway:
             positions_received=self._metrics.positions_received + 1,
         )
         try:
-            self._ingress.put_nowait(position)
+            self._ingress.put_nowait(_IngressPosition(position, self._ingress_generation))
         except asyncio.QueueFull:
             self._server_overflow_pending += 1
             self._metrics = replace(
@@ -319,6 +328,7 @@ class LiveAisGateway:
             and status.stream_epoch is not None
             and status.stream_epoch != self._provider_epoch
         ):
+            self._invalidate_ingress()
             self._provider_epoch = status.stream_epoch
             try:
                 new_epoch = UUID(status.stream_epoch)
@@ -327,14 +337,17 @@ class LiveAisGateway:
             self._latest.clear()
             self._pending.clear()
             self._pending_since = None
+            self._last_observation_at = None
             self._state_incomplete = False
             self._rotate_epoch(new_epoch)
         self._broadcast(self._status_factory())
 
     def gap_sink(self, gap: PelyrWorkerGapEvent) -> None:
+        self._invalidate_ingress()
         self._pending.clear()
         self._pending_since = None
         self._latest.clear()
+        self._last_observation_at = None
         self._connection_state = "RECONNECTING" if gap.reason != "shutdown" else "DISCONNECTED"
         self._source_state = "OFFLINE"
         self._availability = "DATA UNAVAILABLE"
@@ -392,7 +405,7 @@ class LiveAisGateway:
         """Drain accepted ingress and publish one coalesced batch immediately."""
 
         while not self._ingress.empty():
-            self._coalesce(self._ingress.get_nowait())
+            self._accept_ingress(self._ingress.get_nowait())
         self._flush_pending()
         if self._server_overflow_pending:
             self._handle_server_overflow()
@@ -403,15 +416,42 @@ class LiveAisGateway:
                 self._handle_server_overflow()
             timeout = self._next_timeout()
             try:
-                position = await asyncio.wait_for(self._ingress.get(), timeout=timeout)
+                item = await asyncio.wait_for(self._ingress.get(), timeout=timeout)
             except TimeoutError:
                 if self._pending and self._coalesce_due():
                     self._flush_pending()
                 self._expire_positions()
                 continue
-            self._coalesce(position)
+            self._accept_ingress(item)
             if self._coalesce_due():
                 self._flush_pending()
+
+    def _invalidate_ingress(self) -> None:
+        # Sinks run on the consumer's event loop. Rotation and draining do not await;
+        # the generation also rejects an item already taken by wait_for's get task.
+        self._ingress_generation += 1
+        self._server_overflow_pending = 0
+        drained = 0
+        while True:
+            try:
+                self._ingress.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+            drained += 1
+        self._record_invalidated_positions(drained)
+
+    def _record_invalidated_positions(self, count: int) -> None:
+        self._metrics = replace(
+            self._metrics,
+            positions_dropped=self._metrics.positions_dropped + count,
+            positions_invalidated=self._metrics.positions_invalidated + count,
+        )
+
+    def _accept_ingress(self, item: _IngressPosition) -> None:
+        if item.generation != self._ingress_generation:
+            self._record_invalidated_positions(1)
+            return
+        self._coalesce(item.position)
 
     def _coalesce(self, position: LiveAisPosition) -> None:
         if position.mmsi in self._pending:

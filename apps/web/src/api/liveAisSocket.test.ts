@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import sharedFixture from '../../../../test-fixtures/live-ais/v1-server-events.json'
+
 import { liveAisSocketUrl, openLiveAisSocket, type LiveAisWebSocket } from './liveAisSocket'
 
 describe('liveAisSocketUrl', () => {
@@ -56,13 +58,7 @@ describe('openLiveAisSocket', () => {
 
     socket.onopen?.()
     socket.onmessage?.({
-      data: JSON.stringify({
-        protocol_version: '1.0',
-        event: 'stream.status',
-        stream_epoch: 'epoch-1',
-        sequence: 0,
-        emitted_at: '2026-10-08T12:00:00Z',
-      }),
+      data: JSON.stringify(sharedFixture.events[0]),
     })
 
     expect(connected).toEqual([true])

@@ -5,14 +5,31 @@ import type { LiveAisGapEvent, LiveAisStatusEvent } from '../api/liveAis'
 interface LiveAisStatusPanelProps {
   status: LiveAisStatusEvent | null
   gap?: LiveAisGapEvent | null
+  transportConnected?: boolean
+  transportIssue?: string | null
 }
 
-export function LiveAisStatusPanel({ status, gap = null }: LiveAisStatusPanelProps) {
-  const connection = status?.connection_state ?? 'DISCONNECTED'
-  const sourceState = status?.source_state ?? 'OFFLINE'
-  const availability = status?.availability ?? 'DATA UNAVAILABLE'
-  const coverage = status?.coverage.state ?? 'DATA UNAVAILABLE'
-  const detail = status?.detail ?? 'Live AIS worker is not connected. Phase 4 remains planned.'
+export function LiveAisStatusPanel({
+  status,
+  gap = null,
+  transportConnected = false,
+  transportIssue = null,
+}: LiveAisStatusPanelProps) {
+  const connection = transportConnected
+    ? (status?.connection_state ?? 'CONNECTING')
+    : 'DISCONNECTED'
+  const sourceState = transportConnected ? (status?.source_state ?? 'OFFLINE') : 'OFFLINE'
+  const availability = transportConnected
+    ? (status?.availability ?? 'DATA UNAVAILABLE')
+    : 'DATA UNAVAILABLE'
+  const coverage = transportConnected
+    ? (status?.coverage.state ?? 'DATA UNAVAILABLE')
+    : 'DATA UNAVAILABLE'
+  const detail =
+    transportIssue ??
+    (transportConnected
+      ? (status?.detail ?? 'Waiting for the initial product snapshot and status.')
+      : 'The product WebSocket is disconnected. Use refresh to retry.')
   const isAvailable = availability === 'AVAILABLE'
 
   return (
@@ -43,7 +60,7 @@ export function LiveAisStatusPanel({ status, gap = null }: LiveAisStatusPanelPro
         <div>
           <dt>Last observation</dt>
           <dd>
-            {status?.last_observation_at
+            {transportConnected && status?.last_observation_at
               ? formatUtc(status.last_observation_at)
               : 'DATA UNAVAILABLE'}
           </dd>

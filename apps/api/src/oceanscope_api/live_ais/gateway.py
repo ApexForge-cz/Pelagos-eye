@@ -127,6 +127,7 @@ class LiveAisClient:
         self._last_sent_sequence = -1
         self._last_handed_out_sequence = -1
         self._recovering = False
+        self._recovery_snapshot_sequence: int | None = None
         self._closed = False
 
     @property
@@ -165,8 +166,9 @@ class LiveAisClient:
         if event.stream_epoch != self._stream_epoch:
             return
         self._last_sent_sequence = max(self._last_sent_sequence, event.sequence)
-        if self._recovering and event.event == "vessel.snapshot":
+        if self._recovering and event.sequence == self._recovery_snapshot_sequence:
             self._recovering = False
+            self._recovery_snapshot_sequence = None
 
     def build(self, factory: EventFactory, now: datetime) -> LiveAisServerEvent:
         event = factory(self._stream_epoch, self._next_sequence, now)
@@ -189,6 +191,7 @@ class LiveAisClient:
         self._last_sent_sequence = -1
         self._last_handed_out_sequence = -1
         self._recovering = False
+        self._recovery_snapshot_sequence = None
 
     def begin_recovery(self) -> int | None:
         if self._closed or self._recovering or self._last_sent_sequence < 0:
@@ -198,6 +201,11 @@ class LiveAisClient:
         self._next_sequence = max(self._last_sent_sequence, self._last_handed_out_sequence) + 1
         self._recovering = True
         return dropped
+
+    def track_recovery_snapshot(self, event: LiveAisSnapshotEvent) -> None:
+        if not self._recovering or event.stream_epoch != self._stream_epoch:
+            raise RuntimeError("recovery snapshot cannot be tracked outside the active recovery")
+        self._recovery_snapshot_sequence = event.sequence
 
     def close(self, reason: str) -> None:
         if self._closed:
@@ -592,6 +600,9 @@ class LiveAisGateway:
             self._utc_now(),
         )
         snapshot = client.build(self._snapshot_factory(truncated=True), self._utc_now())
+        if not isinstance(snapshot, LiveAisSnapshotEvent):
+            raise AssertionError("snapshot factory returned the wrong event")
+        client.track_recovery_snapshot(snapshot)
         if not client.put(gap) or not client.put(snapshot):
             self._disconnect_slow_client(client)
             return

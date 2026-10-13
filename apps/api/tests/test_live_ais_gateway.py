@@ -540,6 +540,45 @@ def test_slow_client_recovery_reserves_in_flight_sequence(ack_before_gap: bool) 
     asyncio.run(scenario())
 
 
+def test_older_snapshot_ack_does_not_finish_client_recovery() -> None:
+    async def scenario() -> None:
+        gateway = LiveAisGateway(
+            worker_configured=True,
+            config=LiveAisGatewayConfig(client_queue_capacity=2),
+            now=lambda: NOW,
+        )
+        gateway.status_sink(status())
+        client = gateway.register_client()
+        assert client is not None
+        await receive_and_mark(client)
+        await receive_and_mark(client)
+
+        gateway.gap_sink(gap())
+        provider_gap = await receive_and_mark(client)
+        older_snapshot = await client.next_event()
+        assert isinstance(provider_gap, LiveAisGapEvent)
+        assert isinstance(older_snapshot, LiveAisSnapshotEvent)
+
+        # TEST DATA: fill the queue while the provider replacement snapshot is
+        # blocked in the WebSocket sender, forcing a newer client recovery.
+        for _ in range(3):
+            gateway.status_sink(status())
+        assert (client.recovering, client.closed) == (True, False)
+
+        client.mark_sent(older_snapshot)
+        assert client.recovering
+
+        # A second overflow before the tracked recovery snapshot is sent must
+        # disconnect instead of replacing the first recovery gap and snapshot.
+        gateway.status_sink(status())
+        assert client.closed
+        assert gateway.client_count == 0
+        assert gateway.metrics.client_gaps == 1
+        assert gateway.metrics.slow_clients_disconnected == 1
+
+    asyncio.run(scenario())
+
+
 def test_shutdown_cancels_dequeued_ingress_and_purges_queued_state(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

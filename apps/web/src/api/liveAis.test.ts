@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import sharedFixture from '../../../../test-fixtures/live-ais/v1-server-events.json'
 
-import { hasSupportedLiveAisEnvelope } from './liveAis'
+import { hasSupportedLiveAisEnvelope, isSupportedLiveAisEvent } from './liveAis'
 
 describe('hasSupportedLiveAisEnvelope', () => {
   const envelope = {
@@ -32,6 +32,19 @@ describe('hasSupportedLiveAisEnvelope', () => {
       true,
       true,
     ])
+  })
+
+  it('validates every complete shared TEST DATA event', () => {
+    const events = (sharedFixture as { events: unknown[] }).events
+    expect(events.map((event) => isSupportedLiveAisEvent(event))).toEqual([true, true, true, true])
+  })
+
+  it('rejects an envelope whose event-specific payload is incomplete', () => {
+    expect(isSupportedLiveAisEvent(envelope)).toBe(false)
+    expect(isSupportedLiveAisEvent({ ...sharedFixture.events[0], positions: [{}] })).toBe(false)
+    expect(
+      isSupportedLiveAisEvent({ ...sharedFixture.events[0], stream_epoch: 'not-a-uuid' }),
+    ).toBe(false)
   })
 
   it('rejects unsupported versions and event names', () => {

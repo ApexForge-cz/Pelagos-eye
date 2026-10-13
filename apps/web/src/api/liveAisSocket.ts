@@ -1,4 +1,4 @@
-import { hasSupportedLiveAisEnvelope, type LiveAisServerEvent } from './liveAis'
+import { isSupportedLiveAisEvent, type LiveAisServerEvent } from './liveAis'
 
 const PRODUCT_SOCKET_PATH = '/live-ais/ws'
 
@@ -86,12 +86,12 @@ export function openLiveAisSocket({
       close()
       return
     }
-    if (!hasSupportedLiveAisEnvelope(value)) {
+    if (!isSupportedLiveAisEvent(value)) {
       onMalformedFrame?.()
       close()
       return
     }
-    onEvent(value as LiveAisServerEvent)
+    onEvent(value)
   }
   socket.onerror = () => setConnected(false)
   socket.onclose = () => {

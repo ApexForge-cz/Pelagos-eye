@@ -1,9 +1,11 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import type { LiveAisGapEvent, LiveAisStatusEvent } from '../api/liveAis'
 
 import { LiveAisStatusPanel } from './LiveAisStatusPanel'
+
+afterEach(cleanup)
 
 const status: LiveAisStatusEvent = {
   protocol_version: '1.0',
@@ -46,11 +48,11 @@ describe('LiveAisStatusPanel', () => {
 
     expect(screen.getAllByText('DATA UNAVAILABLE')).toHaveLength(3)
     expect(screen.getByText('DISCONNECTED')).toBeInTheDocument()
-    expect(screen.getByText(/Phase 4 remains planned/)).toBeInTheDocument()
+    expect(screen.getByText(/WebSocket is disconnected/)).toBeInTheDocument()
   })
 
   it('renders connected status and continuity gaps without raw payloads', () => {
-    render(<LiveAisStatusPanel status={status} gap={gap} />)
+    render(<LiveAisStatusPanel status={status} gap={gap} transportConnected />)
 
     expect(screen.getByText('AVAILABLE')).toBeInTheDocument()
     expect(screen.getByText('CONNECTED')).toBeInTheDocument()
@@ -60,5 +62,14 @@ describe('LiveAisStatusPanel', () => {
     expect(screen.getByText('provider disconnect')).toBeInTheDocument()
     expect(screen.getByText('Fresh snapshot required')).toBeInTheDocument()
     expect(screen.queryByText('test-epoch')).not.toBeInTheDocument()
+  })
+
+  it('does not present a stale available status after transport disconnects', () => {
+    render(<LiveAisStatusPanel status={status} transportConnected={false} />)
+
+    expect(screen.queryByText('AVAILABLE')).not.toBeInTheDocument()
+    expect(screen.queryByText('COVERED')).not.toBeInTheDocument()
+    expect(screen.getByText('DISCONNECTED')).toBeInTheDocument()
+    expect(screen.getAllByText('DATA UNAVAILABLE')).toHaveLength(3)
   })
 })

@@ -28,7 +28,10 @@ import {
   type SpatialSnapshot,
   type ViewportBounds,
 } from './api/spatial'
-import { createInitialLiveAisState } from './api/liveAisState'
+import type { LiveAisPosition } from './api/liveAis'
+import { openLiveAisSocket } from './api/liveAisSocket'
+import { createInitialLiveAisState, reduceLiveAisEvent } from './api/liveAisState'
+import { LiveAisVesselInspector } from './components/LiveAisVesselInspector'
 import type { MapSelection } from './components/MapWorkspace'
 import { LiveAisStatusPanel } from './components/LiveAisStatusPanel'
 
@@ -50,7 +53,10 @@ type PlatformView =
   | { kind: 'error'; message: string }
 
 export function App() {
-  const [liveAis] = useState(createInitialLiveAisState)
+  const [liveAis, setLiveAis] = useState(createInitialLiveAisState)
+  const [liveAisTransportConnected, setLiveAisTransportConnected] = useState(false)
+  const [liveAisTransportIssue, setLiveAisTransportIssue] = useState<string | null>(null)
+  const [selectedLiveAisMmsi, setSelectedLiveAisMmsi] = useState<string | null>(null)
   const [platform, setPlatform] = useState<PlatformView>({ kind: 'loading' })
   const [refreshKey, setRefreshKey] = useState(0)
   const [bounds, setBounds] = useState<ViewportBounds | null>(null)
@@ -65,16 +71,27 @@ export function App() {
   const [rendererNotice, setRendererNotice] = useState<string | null>(null)
 
   const refresh = useCallback(() => {
+    setLiveAis(createInitialLiveAisState())
+    setLiveAisTransportConnected(false)
+    setLiveAisTransportIssue(null)
     setPlatform({ kind: 'loading' })
     setSpatial(null)
     setSelected(null)
+    setSelectedLiveAisMmsi(null)
     setMarine(null)
     setRefreshKey((value) => value + 1)
   }, [])
 
   const selectMapItem = useCallback((selection: MapSelection) => {
     setMarine(null)
+    setSelectedLiveAisMmsi(null)
     setSelected(selection)
+  }, [])
+
+  const selectLiveAisPosition = useCallback((position: LiveAisPosition) => {
+    setMarine(null)
+    setSelected(null)
+    setSelectedLiveAisMmsi(position.mmsi)
   }, [])
 
   const selectSpatialMode = useCallback((mode: SpatialMode) => {
@@ -86,6 +103,31 @@ export function App() {
     setRendererNotice('3D WEBGL 不可用，已切换到 2D 地图')
     setSpatialMode('2d')
   }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    let socket: ReturnType<typeof openLiveAisSocket> | null = null
+    try {
+      socket = openLiveAisSocket({
+        pageUrl: window.location.href,
+        signal: controller.signal,
+        onEvent: (event) => setLiveAis((state) => reduceLiveAisEvent(state, event)),
+        onConnectionChange: setLiveAisTransportConnected,
+        onMalformedFrame: () =>
+          setLiveAisTransportIssue('Product WebSocket closed after an unsupported frame.'),
+      })
+    } catch {
+      queueMicrotask(() => {
+        if (!controller.signal.aborted) {
+          setLiveAisTransportIssue('Product WebSocket could not be opened.')
+        }
+      })
+    }
+    return () => {
+      controller.abort()
+      socket?.close()
+    }
+  }, [refreshKey])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -322,6 +364,8 @@ export function App() {
                   inspectMarine={inspectMarine}
                   onBoundsChange={setBounds}
                   onSelection={selectMapItem}
+                  liveAis={{ state: liveAis, transportConnected: liveAisTransportConnected }}
+                  onVesselSelection={selectLiveAisPosition}
                 />
               )}
             </Suspense>
@@ -344,6 +388,10 @@ export function App() {
                 <i className="legend-dot violet" />
                 预报查询
               </span>
+              <span>
+                <i className="legend-dot amber" />
+                船舶 AIS（2D）
+              </span>
             </div>
           </div>
         </section>
@@ -360,7 +408,19 @@ export function App() {
           <div className="right-divider" />
           <SourceHealth platform={platform} />
           <div className="right-divider" />
-          <LiveAisStatusPanel status={liveAis.status} gap={liveAis.gap} />
+          <LiveAisStatusPanel
+            status={liveAis.status}
+            gap={liveAis.gap}
+            transportConnected={liveAisTransportConnected}
+            transportIssue={liveAisTransportIssue}
+          />
+          <div className="right-divider" />
+          <LiveAisVesselInspector
+            state={liveAis}
+            transportConnected={liveAisTransportConnected}
+            selectedMmsi={selectedLiveAisMmsi}
+            onSelect={selectLiveAisPosition}
+          />
         </aside>
       </div>
 

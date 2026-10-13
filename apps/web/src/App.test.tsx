@@ -1,6 +1,14 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { LiveAisServerEvent } from './api/liveAis'
+
+const liveAisSocketMock = vi.hoisted(() => ({ open: vi.fn() }))
+
+vi.mock('./api/liveAisSocket', () => ({
+  openLiveAisSocket: liveAisSocketMock.open,
+}))
 
 import { App } from './App'
 
@@ -119,6 +127,11 @@ const portResponse = {
   ],
 }
 
+beforeEach(() => {
+  liveAisSocketMock.open.mockReset()
+  liveAisSocketMock.open.mockReturnValue({ close: vi.fn() })
+})
+
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
@@ -214,4 +227,109 @@ describe('App', () => {
     expect(screen.getByText(/3D WEBGL 不可用/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '2D' })).toHaveAttribute('aria-pressed', 'true')
   })
+
+  it('connects product events to the status and accessible vessel inspector', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: string | URL | Request) => {
+        const path =
+          typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+        let body: object = { generated_at: checkedAt, total: 0, limit: 100, offset: 0, records: [] }
+        if (path.includes('/system/status')) body = systemStatus
+        if (path.includes('/data/sources')) body = sourceCatalog
+        return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }))
+      }),
+    )
+
+    render(<App />)
+    const options = liveAisSocketMock.open.mock.calls[0]?.[0] as
+      | {
+          onConnectionChange: (connected: boolean) => void
+          onEvent: (event: LiveAisServerEvent) => void
+        }
+      | undefined
+    expect(options).toBeDefined()
+    const now = new Date().toISOString()
+    const [snapshot, statusEvent] = liveAisTestEvents(now)
+
+    act(() => {
+      options!.onConnectionChange(true)
+      options!.onEvent(snapshot)
+      options!.onEvent(statusEvent)
+    })
+
+    expect(await screen.findByText('AVAILABLE')).toBeInTheDocument()
+    const vessel = screen.getByRole('button', { name: /MMSI 230000001/ })
+    fireEvent.click(vessel)
+    expect(screen.getByRole('heading', { name: 'MMSI 230000001' })).toBeInTheDocument()
+    expect(screen.getByText(/AIS identity and dynamic fields are fallible/)).toBeInTheDocument()
+
+    act(() => options!.onConnectionChange(false))
+    expect(screen.queryByText('AVAILABLE')).not.toBeInTheDocument()
+    expect(screen.getAllByText('DATA UNAVAILABLE').length).toBeGreaterThan(0)
+  })
 })
+
+function liveAisTestEvents(now: string): [LiveAisServerEvent, LiveAisServerEvent] {
+  const coverage = {
+    state: 'COVERED' as const,
+    description: 'TEST DATA fixed Gulf coverage.',
+    bounds: { west: 23.5, south: 59.5, east: 26.5, north: 60.5 },
+    effective_at: now,
+  }
+  const position = {
+    observation_id: 'TEST-DATA-observation',
+    mmsi: '230000001',
+    observed_at: now,
+    longitude: 24.5,
+    latitude: 60,
+    speed_over_ground_knots: 10,
+    course_over_ground_deg: 90,
+    true_heading_deg: 90,
+    navigational_status_code: null,
+    quality_flags: ['TEST DATA'],
+    provenance: {
+      source_slug: 'test-source',
+      source_url: 'https://example.test/live-ais',
+      attribution_text: 'TEST DATA attribution',
+      data_version: 'TEST-DATA-1',
+      schema_version: 'test-v1',
+      provider_message_type: 'TEST DATA',
+      source_event_id: 'TEST-DATA-event',
+      ingested_at: now,
+      normalized_at: now,
+      source_state: 'LIVE' as const,
+      cache_age_seconds: null,
+    },
+  }
+  return [
+    {
+      protocol_version: '1.0',
+      event: 'vessel.snapshot',
+      stream_epoch: '11111111-1111-4111-8111-111111111111',
+      sequence: 0,
+      emitted_at: now,
+      availability: 'AVAILABLE',
+      source_state: 'LIVE',
+      cache_age_seconds: null,
+      coverage,
+      positions: [position],
+      truncated: false,
+    },
+    {
+      protocol_version: '1.0',
+      event: 'stream.status',
+      stream_epoch: '11111111-1111-4111-8111-111111111111',
+      sequence: 1,
+      emitted_at: now,
+      connection_state: 'CONNECTED',
+      source_state: 'LIVE',
+      cache_age_seconds: null,
+      availability: 'AVAILABLE',
+      coverage,
+      last_observation_at: now,
+      retry_at: null,
+      detail: 'TEST DATA stream connected.',
+    },
+  ]
+}

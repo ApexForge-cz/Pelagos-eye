@@ -320,6 +320,10 @@ p {
   color: var(--violet);
   background: var(--violet);
 }
+.legend-dot.amber {
+  color: #e8bb69;
+  background: #e8bb69;
+}
 .layer-copy {
   display: grid;
   min-width: 0;

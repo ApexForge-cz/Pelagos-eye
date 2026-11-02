@@ -6,6 +6,7 @@ COPY apps/web/package.json ./apps/web/package.json
 RUN npm ci
 
 COPY apps/web ./apps/web
+COPY test-fixtures/live-ais/v1-server-events.json ./test-fixtures/live-ais/v1-server-events.json
 RUN npm run web:build
 
 FROM nginxinc/nginx-unprivileged:1.29-alpine

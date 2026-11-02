@@ -42,8 +42,25 @@ services:
       OCEANSCOPE_DATABASE_URL: ${OCEANSCOPE_DATABASE_URL:?Set OCEANSCOPE_DATABASE_URL}
       OCEANSCOPE_REDIS_URL: ${OCEANSCOPE_REDIS_URL:?Set OCEANSCOPE_REDIS_URL}
       OCEANSCOPE_CORS_ORIGINS: ${OCEANSCOPE_CORS_ORIGINS:?Set OCEANSCOPE_CORS_ORIGINS}
+      # Fixed local demo origins; do not inherit the source-only .env example.
+      OCEANSCOPE_LIVE_AIS_ORIGINS: http://localhost:4173,http://localhost:5173
+      PELYR_API_KEY: ${PELYR_API_KEY:-}
+    # Nginx connects over real loopback in this development-only shared namespace.
+    # Forwarded addresses remain headers, not authority for the loopback guard.
+    command:
+      [
+        "uvicorn",
+        "oceanscope_api.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--no-proxy-headers",
+      ]
     ports:
-      - "8000:8000"
+      # Host Vite also crosses Docker NAT: route it through Nginx's API listener.
+      - "127.0.0.1:8000:8081"
+      - "127.0.0.1:4173:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,11 +83,14 @@ services:
     build:
       context: ..
       dockerfile: infra/web.Dockerfile
-    ports:
-      - "4173:8080"
+    # Keep the existing backend loopback-only policy without trusting bridge IPs.
+    # Publish this namespace's Web port on api, the namespace owner, above.
+    network_mode: service:api
     depends_on:
       api:
         condition: service_healthy
+        # Rejoin the owner's namespace after an explicit Compose API restart/update.
+        restart: true
     restart: unless-stopped
 
 volumes:

@@ -103,8 +103,11 @@ class StreamCheck:
             self.epoch = event.stream_epoch
             self.sequence = -1
             self.needs_snapshot = True
+            self.saw_status = False
         if event.sequence <= self.sequence:
             raise SmokeFailure("Sequence must increase strictly within an epoch.")
+        if not isinstance(event, LiveAisSnapshotEvent) and event.sequence != self.sequence + 1:
+            raise SmokeFailure("Incremental events must have contiguous sequences.")
         self.sequence = event.sequence
         if self.mode == "no-key" and self.events == 1 and not isinstance(event, LiveAisStatusEvent):
             raise SmokeFailure("Initial snapshot must be followed by product status.")

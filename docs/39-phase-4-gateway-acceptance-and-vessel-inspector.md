@@ -2,7 +2,7 @@
 
 **Status:** B6.1/B6.2 backend accepted after PRs #59 and #61. Developer A browser integration is implemented and awaiting real-data/runtime acceptance. Phase 4 remains `Planned`.
 
-**Review date:** 2026-10-13
+**Review date:** 2026-11-11
 
 ## Developer B B6.2 acceptance
 
@@ -31,6 +31,13 @@ The browser integration opens one same-origin product WebSocket and feeds only v
 The first slice renders vessels in the 2D MapLibre workspace; the 3D globe does not yet have a live-vessel layer. Reconnection is explicit through the page refresh control rather than an unbounded browser retry loop.
 
 ## Remaining acceptance boundary
+
+The independent PR #64 review found two false-positive smoke-check conditions
+(skipped incremental sequences and status evidence reused across epochs). The focused
+correction and regression evidence are recorded in
+`docs/b-deliveries/B6.3-live-ais-development-runtime.md`. The full backend and default
+frontend suites pass locally. Runtime revalidation is incomplete after a Docker host
+disk-space failure; the earlier runtime results do not replace current acceptance.
 
 - Issue #62 must pass the Pelyr key/Origin Compose wiring and Nginx WebSocket proxy without exposing a credential.
 - Run a credential-backed browser session against only the fixed Gulf of Finland box.

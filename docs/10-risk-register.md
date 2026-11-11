@@ -248,4 +248,26 @@ and after source, architecture, team, or deployment changes.
 
 ## Review protocol
 
+### 2026-11-11 B6.3 acceptance harness review
+
+- **R-15/R-16; Developer B:** PR #64's smoke checker could accept skipped incremental
+  sequences, although the browser requires contiguous incremental delivery. It could also
+  reuse a prior epoch's status to accept a replacement epoch with no status. Both defects
+  were reproduced with focused tests; the checker now rejects incremental skips and resets
+  status evidence at epoch changes. Replacement snapshots may still establish a newer
+  sequence baseline, matching the existing browser contract.
+- These findings concern false-positive acceptance evidence, not a demonstrated gateway
+  regression. Likelihood is reduced by regression coverage; impact remains High until
+  both local proxy paths and credential-backed browser behavior are accepted. No provider,
+  gateway, public contract, persistence policy, or production access control changed.
+- Next review: apply the focused harness correction to PR #64, rerun its CI, then complete
+  Developer A's fixed-region browser acceptance. Phase 4 remains `Planned`.
+- After disk recovery, current-source diagnostic images passed both 75-second no-key
+  proxy checks, denied unapproved Origins, and recovered both routes after managed API
+  restart in 17.3 seconds. Source/artifact hashes and all 30 runtime dependency versions
+  were verified. This narrows the local-topology uncertainty; it does not accept the
+  fresh-image build or real-provider browser gates. Registry/builder networking remains
+  blocked, and the earlier cached Web image had empty files. Rebuild the original images
+  with working network access and verify artifact integrity before closing issue #62.
+
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

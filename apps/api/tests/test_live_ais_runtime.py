@@ -178,6 +178,41 @@ def test_smoke_rejects_changed_coverage_and_false_no_key_claims(
         smoke.StreamCheck("no-key").accept(json.dumps(no_key_events[0]))
 
 
+def test_smoke_rejects_skipped_incremental_sequence(
+    no_key_events: list[dict[str, object]],
+) -> None:
+    check = smoke.StreamCheck("no-key")
+    check.accept(json.dumps(no_key_events[0]))
+    no_key_events[1]["sequence"] = cast(int, no_key_events[0]["sequence"]) + 2
+    with pytest.raises(smoke.SmokeFailure, match="contiguous"):
+        check.accept(json.dumps(no_key_events[1]))
+
+
+def test_smoke_requires_status_in_the_current_epoch(
+    no_key_events: list[dict[str, object]],
+) -> None:
+    check = smoke.StreamCheck("no-key")
+    for event in no_key_events:
+        check.accept(json.dumps(event))
+    new_epoch = "a5a1506c-e2a4-4ad2-a1c7-c6690f157bc2"  # TEST DATA
+    check.accept(json.dumps(dict(no_key_events[0], stream_epoch=new_epoch)))
+    with pytest.raises(smoke.SmokeFailure, match="Snapshot/status"):
+        check.finish()
+    check.accept(json.dumps(dict(no_key_events[1], stream_epoch=new_epoch)))
+    check.finish()
+
+
+def test_smoke_accepts_replacement_snapshot_with_a_new_sequence_baseline(
+    no_key_events: list[dict[str, object]],
+) -> None:
+    check = smoke.StreamCheck("no-key")
+    for event in no_key_events:
+        check.accept(json.dumps(event))
+    check.accept(json.dumps(dict(no_key_events[0], sequence=10)))
+    check.accept(json.dumps(dict(no_key_events[1], sequence=11)))
+    check.finish()
+
+
 def test_smoke_does_not_claim_live_acceptance_without_observations(
     no_key_events: list[dict[str, object]],
 ) -> None:

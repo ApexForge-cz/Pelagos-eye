@@ -28,6 +28,7 @@ describe('reduceLiveAisEvent', () => {
 
     expect(state.requiresSnapshot).toBe(false)
     expect(state.lastSequence).toBe(2)
+    expect(state.snapshotSequence).toBe(snapshot.sequence)
     expect(Object.keys(state.positions)).toEqual(['999000001'])
     expect(state.positions['999000001']?.observation_id).toBe('test:position:0002')
     expect(state.status?.connection_state).toBe('CONNECTED')
@@ -56,6 +57,7 @@ describe('reduceLiveAisEvent', () => {
     const fresh = reduceLiveAisEvent(afterGap, { ...snapshot, sequence: gap.sequence + 1 })
     expect(fresh.requiresSnapshot).toBe(false)
     expect(fresh.positions['999000001']).toBeDefined()
+    expect(fresh.snapshotSequence).toBe(gap.sequence + 1)
   })
 
   it('rejects skipped sequences and changed epochs until a snapshot arrives', () => {

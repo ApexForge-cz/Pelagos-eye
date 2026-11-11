@@ -92,6 +92,7 @@ export function App() {
     setMarine(null)
     setSelected(null)
     setSelectedLiveAisMmsi(position.mmsi)
+    setSpatialMode('2d')
   }, [])
 
   const selectSpatialMode = useCallback((mode: SpatialMode) => {
@@ -366,6 +367,7 @@ export function App() {
                   onSelection={selectMapItem}
                   liveAis={{ state: liveAis, transportConnected: liveAisTransportConnected }}
                   onVesselSelection={selectLiveAisPosition}
+                  selectedVesselMmsi={selectedLiveAisMmsi}
                 />
               )}
             </Suspense>

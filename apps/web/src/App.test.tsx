@@ -18,15 +18,17 @@ vi.mock('./components/MapWorkspace', async () => {
     MapWorkspace: ({
       onBoundsChange,
       onSelection,
+      selectedVesselMmsi,
     }: {
       onBoundsChange: (bounds: { west: number; south: number; east: number; north: number }) => void
       onSelection: (selection: unknown) => void
+      selectedVesselMmsi?: string | null
     }) => {
       React.useEffect(() => {
         onBoundsChange({ west: 100, south: 10, east: 130, north: 40 })
       }, [onBoundsChange])
       return (
-        <div aria-label="OceanScope 交互式海事地图">
+        <div aria-label="OceanScope 交互式海事地图" data-selected-vessel={selectedVesselMmsi}>
           <button
             type="button"
             onClick={() => onSelection({ kind: 'coordinate', longitude: 120.5, latitude: 30.25 })}
@@ -259,8 +261,15 @@ describe('App', () => {
     })
 
     expect(await screen.findByText('AVAILABLE')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '3D' }))
+    expect(await screen.findByLabelText('OceanScope 交互式三维地球')).toBeInTheDocument()
     const vessel = screen.getByRole('button', { name: /MMSI 230000001/ })
     fireEvent.click(vessel)
+    expect(await screen.findByLabelText('OceanScope 交互式海事地图')).toHaveAttribute(
+      'data-selected-vessel',
+      '230000001',
+    )
+    expect(screen.getByRole('button', { name: '2D' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('heading', { name: 'MMSI 230000001' })).toBeInTheDocument()
     expect(screen.getByText(/AIS identity and dynamic fields are fallible/)).toBeInTheDocument()
 

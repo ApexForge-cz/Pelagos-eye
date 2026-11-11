@@ -246,6 +246,25 @@ and after source, architecture, team, or deployment changes.
   uncovered, delayed/offline, out-of-bounds, and older-than-five-minute observations. They
   remain disconnected from the product gateway until Issue #56 passes Developer A review.
 
+## Phase 4 Developer A locate/follow review - 2026-11-11
+
+- R-01/R-10: the camera follows only a position accepted by the existing visibility,
+  transport, bounds and freshness gates. Controls unmount when validity is lost; a new
+  selection, stream epoch or accepted replacement snapshot resets follow intent. Manual
+  movement and an explicit stop button release camera control. No interpolation, track
+  retention, navigation claim or new provider request is introduced. Silent expiry uses
+  the existing 15-second display timer.
+- R-06: real-browser acceptance found that MapLibre 6's default sibling-worker URL did
+  not resolve from Vite's bundled module; GeoJSON stayed loading although unit mocks
+  passed. Explicitly bundling the installed worker restores point rendering. The browser
+  check now hit-tests an actual rendered TEST DATA point on both development and built
+  assets, rather than accepting camera movement alone.
+- Mitigation evidence: frontend unit/integration checks, reduced-motion keyboard/manual
+  override and desktop/narrow-screen browser checks are recorded in
+  `docs/40-phase-4-vessel-follow.md`. These tests block external requests and intercept
+  API/socket traffic. Credential-backed regional browser and bounded burst/load gates
+  remain open; Phase 4 remains `Planned`.
+
 ## Review protocol
 
 Each review updates likelihood, impact, evidence, mitigation status, owner, and next review date. A high-impact risk without an active mitigation blocks its dependent phase. Closed risks remain in history with the decision or evidence that closed them.

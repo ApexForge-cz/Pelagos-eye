@@ -5,18 +5,24 @@ import {
   Map as MapLibreMap,
   Marker,
   NavigationControl,
+  setWorkerUrl,
   type MapMouseEvent,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 
 import type { LiveAisPosition } from '../api/liveAis'
 import type { LiveAisClientState } from '../api/liveAisState'
 import type { EarthquakeRecord, PortRecord, ViewportBounds } from '../api/spatial'
+import { LiveAisFollowControl } from './LiveAisFollowControl'
 import {
   LIVE_AIS_MAP_LIMIT,
   mountLiveAisVesselLayer,
   visibleLiveAisPositions,
 } from './liveAisVesselLayer'
+
+// MapLibre 6's sibling-worker lookup cannot resolve Vite's bundled module paths.
+setWorkerUrl(workerUrl)
 
 export type MapSelection =
   | { kind: 'port'; record: PortRecord }
@@ -33,6 +39,7 @@ interface MapWorkspaceProps {
   onSelection: (selection: MapSelection) => void
   liveAis?: { state: LiveAisClientState; transportConnected: boolean }
   onVesselSelection?: (position: LiveAisPosition) => void
+  selectedVesselMmsi?: string | null
 }
 
 interface MapCallbacks {
@@ -50,6 +57,7 @@ export function MapWorkspace({
   onSelection,
   liveAis,
   onVesselSelection,
+  selectedVesselMmsi,
 }: MapWorkspaceProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
@@ -65,11 +73,13 @@ export function MapWorkspace({
   const [now, setNow] = useState(() => Date.now())
   const [coordinates, setCoordinates] = useState('0.0000°, 0.0000°')
   const [basemapUnavailable, setBasemapUnavailable] = useState(false)
+  const [readyMap, setReadyMap] = useState<MapLibreMap | null>(null)
   const hasLiveAis = Boolean(liveAis)
   const visibleVessels = useMemo(
     () => (liveAis ? visibleLiveAisPositions(liveAis.state, now, liveAis.transportConnected) : []),
     [liveAis, now],
   )
+  const selectedVessel = visibleVessels.find((position) => position.mmsi === selectedVesselMmsi)
 
   useEffect(() => {
     callbacksRef.current = { onBoundsChange, onSelection }
@@ -135,6 +145,7 @@ export function MapWorkspace({
     const basemapController = new AbortController()
     const activeMarkers = markersRef.current
     map.on('load', () => {
+      setReadyMap(map)
       liveAisLayerRef.current = mountLiveAisVesselLayer(map, (position) => {
         liveAisRef.current.onVesselSelection?.(position)
       })
@@ -239,6 +250,13 @@ export function MapWorkspace({
     <div className={`map-stage ${inspectMarine ? 'is-inspecting' : ''}`}>
       <div className="map-grid" aria-hidden="true" />
       <div ref={containerRef} className="map-canvas" aria-label="OceanScope 交互式海事地图" />
+      {readyMap && selectedVessel && (
+        <LiveAisFollowControl
+          key={`${liveAis?.state.streamEpoch}:${liveAis?.state.snapshotSequence}:${selectedVessel.mmsi}`}
+          map={readyMap}
+          position={selectedVessel}
+        />
+      )}
       {basemapUnavailable && <div className="map-basemap-state">BASEMAP OFFLINE · WGS 84</div>}
       {liveAis && (
         <div className="map-ais-state" aria-label="AIS map layer status">

@@ -30,6 +30,12 @@ The browser integration opens one same-origin product WebSocket and feeds only v
 
 The first slice renders vessels in the 2D MapLibre workspace; the 3D globe does not yet have a live-vessel layer. Reconnection is explicit through the page refresh control rather than an unbounded browser retry loop.
 
+The next A-side slice adds explicit 2D locate/follow controls for a selected displayable
+observation. Manual map movement stops following; selection, snapshot, epoch, transport
+or display-validity changes require explicit follow again. The actual MapLibre worker
+and point hit-test are checked in isolated development and production-preview browsers.
+Evidence and the remaining real-data boundary are in `docs/40-phase-4-vessel-follow.md`.
+
 ## Remaining acceptance boundary
 
 - Issue #62 must pass the Pelyr key/Origin Compose wiring and Nginx WebSocket proxy without exposing a credential.

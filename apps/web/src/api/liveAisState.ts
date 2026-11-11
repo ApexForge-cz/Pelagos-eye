@@ -10,6 +10,7 @@ export type LiveAisContinuityIssue =
 
 export interface LiveAisClientState {
   streamEpoch: string | null
+  snapshotSequence: number | null
   lastSequence: number | null
   requiresSnapshot: boolean
   positions: Readonly<Record<string, LiveAisPosition>>
@@ -22,6 +23,7 @@ export interface LiveAisClientState {
 export function createInitialLiveAisState(): LiveAisClientState {
   return {
     streamEpoch: null,
+    snapshotSequence: null,
     lastSequence: null,
     requiresSnapshot: true,
     positions: {},
@@ -46,6 +48,7 @@ export function reduceLiveAisEvent(
     }
     return {
       streamEpoch: event.stream_epoch,
+      snapshotSequence: event.sequence,
       lastSequence: event.sequence,
       requiresSnapshot: false,
       positions: Object.fromEntries(event.positions.map((position) => [position.mmsi, position])),

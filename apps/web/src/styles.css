@@ -610,6 +610,46 @@ p {
   color: #f3d7a8;
   text-decoration: underline;
 }
+
+.map-ais-follow {
+  position: absolute;
+  z-index: 3;
+  bottom: 48px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: fit-content;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(8, 18, 27, 0.95);
+  font-size: 11px;
+}
+
+.map-ais-follow button {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.map-ais-follow button[aria-pressed='true'] {
+  border-color: #e8bb69;
+}
+
+.map-ais-follow button:focus-visible {
+  outline: 2px solid #e8bb69;
+  outline-offset: 2px;
+}
+
+.map-ais-follow span {
+  flex-basis: 100%;
+}
 .spatial-marker {
   width: 9px;
   height: 9px;
@@ -1472,6 +1512,9 @@ p {
 }
 
 @media (max-width: 28rem) {
+  .map-ais-follow {
+    bottom: 5.5rem;
+  }
   .status-inline {
     display: none;
   }

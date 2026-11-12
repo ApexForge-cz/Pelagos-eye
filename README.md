@@ -3,6 +3,8 @@
 > Global Maritime Situational Awareness & Analytics Platform<br>
 > 全球港航态势感知与智能分析平台
 
+快速入口：[Windows 启动与关闭](#windows-启动与关闭)
+
 **Status: Phase 3 Complete — Digital Earth**
 
 OceanScope is a map-first web platform for exploring maritime activity, ports, ocean conditions, and risk signals. Phases 0 through 3 are complete. Phase 2 delivered the shared provenance foundation, reproducible imports from five official source families, bounded public queries, and a minimal real-data status UI. Phase 3 delivered accepted 2D and focused 3D spatial workspaces over real port, earthquake, and marine-forecast data. No public WPI or restricted historical-AIS record API, live AIS layer, or production deployment is claimed yet.
@@ -178,8 +180,15 @@ python scripts/check.py
 
 Run the minimal development processes in separate terminals:
 
+`Terminal 1` — source API (do not also start it when the Docker API already owns port 8000):
+
 ```bash
 uv run --directory apps/api uvicorn oceanscope_api.main:app --reload
+```
+
+`Terminal 2` — source Web:
+
+```bash
 npm run web:dev
 ```
 
@@ -193,6 +202,87 @@ Export an internal reproducibility manifest for a known ingestion run with:
 ```bash
 uv run --directory apps/api oceanscope-export-manifest --ingestion-run-id <uuid>
 ```
+
+### Windows 启动与关闭
+
+先在**仓库根目录**（包含 `package.json` 的目录）打开 PowerShell。Docker Desktop
+的 Linux 引擎需要处于 Running 状态；首次安装前端依赖执行一次 `npm ci`，
+日常启动无需重复安装。
+
+**日常启动：已有本机容器。** 先启动 OceanScope 的四个容器：
+
+```powershell
+docker start oceanscope-postgres-1 oceanscope-redis-1 oceanscope-api-1 oceanscope-web-1
+if ($LASTEXITCODE -ne 0) { throw "后端启动失败，请检查 Docker Desktop 和容器是否存在。" }
+```
+
+然后在同一终端以前台方式运行源码前端，并保持此终端打开：
+
+```powershell
+npm run dev --workspace @oceanscope/web -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+浏览器打开 `http://localhost:5173`。桌面通常默认显示 3D 地球，也可以使用页面上的
+`3D / 2D` 按钮切换；不支持 WebGL 时会回退到 2D。
+
+| 地址 | 用途 |
+| --- | --- |
+| `http://localhost:5173` | 当前源码前端；日常开发和演示优先使用 |
+| `http://localhost:4173` | Docker 镜像中打包的前端；源码更新后不会自动更新旧镜像 |
+| `http://localhost:8000/docs` | API 文档，不是地球页面 |
+| `http://localhost:8000/health/ready` | API 就绪检查 |
+
+新版 Compose 中，`web` 同时提供 Nginx API/WebSocket 代理；即使使用 5173 的源码
+前端，也要启动它。容器健康不代表已导入数据：缺少官方数据或 AIS 服务端密钥时，
+对应模块显示 `DATA UNAVAILABLE`，不会生成演示船舶或补造数据。
+
+**首次创建容器或更新后端镜像。** 先将 `.env.example` 复制为本地、不提交的
+`.env`，填写 Compose 要求的数据库、Redis 和 CORS 配置；不要覆盖已有配置或
+将密钥写入前端。配置完成后执行：
+
+```powershell
+docker compose --env-file .env -p oceanscope -f infra/compose.yaml up -d --build --wait
+```
+
+该命令需要镜像与依赖下载正常；首次数据库迁移和官方数据导入另见
+[API 说明](apps/api/README.md)。拉取了后端或基础设施改动后，应使用此构建命令，
+仅 `start` 不会把新代码装入旧镜像。共享网络下的 API/Web 重建和重启规则见
+[B6.3 本地运行说明](docs/b-deliveries/B6.3-live-ais-development-runtime.md)。
+
+**正常关闭。** 在运行 Vite 的终端按 `Ctrl+C`，停止前端；单纯关闭浏览器标签不会
+停止任何后台服务。然后在 PowerShell 停止 OceanScope 容器：
+
+```powershell
+docker stop oceanscope-web-1 oceanscope-api-1 oceanscope-redis-1 oceanscope-postgres-1
+```
+
+这些命令只停止服务，保留代码、容器和数据库卷；下次按上面的日常启动步骤恢复。
+不要把删除数据库卷当作关闭项目。
+
+**如果前端是按讲稿在后台启动的：** 没有可按 `Ctrl+C` 的终端时，确认 5173 属于
+OceanScope 后执行下面的命令。它只停止该端口对应的 Node/Vite 进程：
+
+```powershell
+Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue |
+    Select-Object -ExpandProperty OwningProcess -Unique |
+    ForEach-Object {
+        $viteProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$($_)"
+        if ($viteProcess.Name -eq "node.exe" -and $viteProcess.CommandLine -like "*vite*") {
+            Stop-Process -Id $viteProcess.ProcessId
+        } else {
+            Write-Warning "5173 由其他程序占用，未自动停止。"
+        }
+    }
+```
+
+**打不开时先检查：**
+
+- `ERR_CONNECTION_REFUSED`：先确认 Vite 终端还在运行、访问的是 5173；重启浏览器
+  不能代替启动服务。
+- `Port 5173 is already in use`：`--strictPort` 会明确报错，不会悄悄改到其他端口。
+  使用 `Get-NetTCPConnection -LocalPort 5173 -State Listen` 查看占用进程，先确认归属。
+- 页面能打开但数据不可用：检查 `docker ps --filter name=oceanscope`、API 就绪状态和
+  页面中的来源/新鲜度提示；空数据库、来源故障和端口故障不是同一件事。
 
 ## Data Integrity Principles
 
